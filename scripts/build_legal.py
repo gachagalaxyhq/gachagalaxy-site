@@ -1,14 +1,12 @@
 """Build fuller Terms / Privacy / Risk pages in the existing legal style.
-Structure adapted from 37signals policies (CC BY 4.0). Placeholders marked [[...]]."""
+"""
 import os, html
 OUT = os.environ.get("OUT", "/home/user/workspace/site/public")
 EFF = "3 October 2026"
 CO = "Gacha Galaxy Labs Inc."
 CO_FULL = "Gacha Galaxy Labs Inc., a company incorporated in Panama"
 MAIL = '<a href="mailto:Support@gachagalaxy.io">Support@gachagalaxy.io</a>'
-ATTR = ('<p class="legal-intro" style="font-size:12px;opacity:.7">Parts of this page are adapted from the '
-        '<a href="https://github.com/basecamp/policies">37signals policies</a>, licensed under '
-        '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, and changed for Gacha Galaxy.</p>')
+ATTR = ""
 PAGES = {
 "terms": ("Terms of Use", "These terms govern access to and use of Gacha Galaxy products, data, interfaces, and related services.", [
  ("Acceptance of Terms", f"By accessing or using gachagalaxy.io or any Gacha Galaxy service (the \"Service\"), you agree to these terms. The Service is operated by {CO_FULL} (\"Gacha Galaxy\", \"we\", \"us\"). If you use the Service on behalf of a company, you confirm you can accept these terms for it."),
