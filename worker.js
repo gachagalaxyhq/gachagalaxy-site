@@ -2,7 +2,7 @@
 // Attach to: gachagalaxy.io/* and www.gachagalaxy.io/*
 // Dan's OVH server is not changed. These paths go to it exactly as today.
 const PAGES = "https://gachagalaxy-site.pages.dev"; // Cloudflare Pages test address
-const OVH_PATHS = ["/terms", "/privacy", "/risk-disclosure", "/static", "/app"];
+const OVH_PATHS = ["/terms", "/privacy", "/risk-disclosure", "/static", "/app", "/alpha"];
 
 export default {
   async fetch(request) {
