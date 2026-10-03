@@ -7,12 +7,25 @@ upd = dt.datetime.strptime(cc["updated"], "%Y-%m-%dT%H:%M:%SZ").strftime("%-d %b
 hist = {}
 hp = f"{R}/data/history.json"
 if os.path.exists(hp): hist = json.load(open(hp))
+
+import re as _re
+_UP = {"EX","GX","V","VMAX","VSTAR","SV","SIR","AR","SAR","IR","ETB","SWSH","TG","PSA","CGC","151","II","III","UR","HR","SR","CHR"}
+def clean_name(n):
+    n = (n or "").strip()
+    fa = False
+    m = _re.match(r"(?i)full art\s*/\s*(.+)", n)
+    if m: n, fa = m.group(1).strip(), True
+    if n.isupper():
+        n = " ".join(w if w.upper() in _UP else "-".join(x[:1] + x[1:].lower() for x in w.split("-")) for w in n.split())
+    n = _re.sub(r"\b(Vmax|Vstar)\b", lambda m: m.group(1).upper(), n)
+    n = _re.sub(r"\s+", " ", n)
+    return n + (" (Full Art)" if fa else "")
 cards = []
 for k, c in enumerate(cc["cards"], 1):
     key = f"{c['set']}|{c['no']}|{c['grade']}"
     L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"]] for l in c["listings"]]
     H = hist.get(key) or [[cc["updated"][:10], c["point"], None]]
-    cards.append(dict(i=k, n=c["name"], s=c["set"], no=c["no"], cn=c["name"], cl=f"{c['set']} · #{c['no']}",
+    cards.append(dict(i=k, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
         la=c["low_ask"], se=True, f=c["featured"], lp="Collector Crypt", g=c["grade"], ga=c["point"], gn=c["n"],
         u=None, im=(f"https://gachagalaxy-site.pages.dev/cards/{c['id']}.webp" if os.path.exists(f"{R}/public/cards/{c['id']}.webp") else c["img"]), pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
         confidence=c["confidence"], tier=c["tier"], prices_used=c["prices_used"], eligible=True)], L=L, H=H))
