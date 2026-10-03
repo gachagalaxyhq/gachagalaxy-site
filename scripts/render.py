@@ -14,7 +14,7 @@ for k, c in enumerate(cc["cards"], 1):
     H = hist.get(key) or [[cc["updated"][:10], c["point"], None]]
     cards.append(dict(i=k, n=c["name"], s=c["set"], no=c["no"], cn=c["name"], cl=f"{c['set']} · #{c['no']}",
         la=c["low_ask"], se=True, f=c["featured"], lp="Collector Crypt", g=c["grade"], ga=c["point"], gn=c["n"],
-        u=None, im=c["img"], pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
+        u=None, im=(f"/cards/{c['id']}.webp" if os.path.exists(f"{R}/public/cards/{c['id']}.webp") else c["img"]), pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
         confidence=c["confidence"], tier=c["tier"], prices_used=c["prices_used"], eligible=True)], L=L, H=H))
 cards.sort(key=lambda x: (not x["f"], -x["ga"]))
 df = cards[0]["i"]
@@ -50,4 +50,18 @@ h = h.replace("gg-platform-final.html", "platform.html")
 open(f"{R}/public/index.html", "w", encoding="utf-8").write(h)
 for f in ["og-image-new.png"]:
     if os.path.exists(f"{R}/{f}"): shutil.copy(f"{R}/{f}", f"{R}/public/{f}")
+import re, hashlib, base64
+os.makedirs(f"{R}/public/assets", exist_ok=True)
+EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/svg+xml":"svg","image/webp":"webp"}
+def unin(m):
+    mime, b = m.group(1), m.group(2)
+    if mime not in EXT or len(b) < 2000: return m.group(0)
+    raw = base64.b64decode(b); n = hashlib.sha1(raw).hexdigest()[:12] + "." + EXT[mime]
+    fp = f"{R}/public/assets/{n}"
+    if not os.path.exists(fp): open(fp, "wb").write(raw)
+    return "/assets/" + n
+for f in ["index.html", "platform.html"]:
+    fp = f"{R}/public/{f}"; t = open(fp, encoding="utf-8").read()
+    t = re.sub(r"data:([a-z/+]+);base64,([A-Za-z0-9+/=]+)", unin, t)
+    open(fp, "w", encoding="utf-8").write(t)
 print("rendered cards", len(cards), "scanner", len(below), "below", len(above), "above", "updated", upd)

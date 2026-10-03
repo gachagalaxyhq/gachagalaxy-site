@@ -56,7 +56,7 @@ for c in cards: c['featured']=c in feat
 out=dict(source="Collector Crypt",updated=now.strftime('%Y-%m-%dT%H:%M:%SZ'),listings_read=len(raw),cards=cards)
 # sanity: keep last good file if result looks bad
 bad=len(cards)<100 or any(not isinstance(c['point'],(int,float)) or c['point']<=0 for c in cards)
-if bad and os.path.exists(OUT): print("BAD RESULT, kept last good file", len(cards)); sys.exit(0)
+if bad and os.path.exists(OUT): print("BAD RESULT, kept last good file", len(cards)); sys.exit(1)
 json.dump(out,open(OUT,'w'),separators=(',',':'))
 print("cards",len(cards),"featured",len(feat),"bytes",os.path.getsize(OUT))
 for c in feat: print(f"  {c['name'][:40]:40} | {c['grade']:7} | ${c['point']:>8,.2f} | {c['n']} listings | conf {c['confidence']} {c['tier']}")
