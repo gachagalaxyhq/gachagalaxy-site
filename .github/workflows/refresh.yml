@@ -1,7 +1,5 @@
 name: Refresh Collector Crypt prices
 on:
-  schedule:
-    - cron: "17 */4 * * *"   # every 4 hours
   workflow_dispatch: {}
 permissions:
   contents: write
