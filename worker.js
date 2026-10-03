@@ -3,8 +3,8 @@
 // Dan's OVH server is not changed. DNS and email are not changed.
 const PAGES = "https://gachagalaxy-site.pages.dev"; // new site on Cloudflare Pages
 
-// These keep going to Dan's server exactly as today
-const OVH_PATHS = ["/terms", "/privacy", "/risk-disclosure", "/static", "/app/api"];
+// These keep going to Dan's server exactly as today (not used by the new site)
+const OVH_PATHS = ["/static", "/app/api"];
 // These old pages now send visitors to the new platform (302 = easy to undo)
 const TO_PLATFORM = ["/app", "/alpha"];
 
@@ -15,7 +15,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 1. Legal pages, static files and Dan's API: pass through to OVH, unchanged
+    // 1. Old static files and Dan's API: pass through to OVH, unchanged
     if (match(path, OVH_PATHS)) return fetch(request);
 
     // 2. Old app and alpha pages: send to the new platform
