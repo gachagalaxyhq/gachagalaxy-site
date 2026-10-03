@@ -25,6 +25,8 @@ while True:
         r["img"] = (x.get("images") or {}).get("frontM") or x.get("frontImage")
         out.append(r)
     pages += 1; cursor = d.get("nextCursor")
+    # CC returns priced (for-sale) cards first; stop once a page is not fully priced
+    if sum(1 for x in rows if (x.get("listing") or {}).get("price") is not None) < len(rows): break
     if pages % 10 == 0: print("pages", pages, "rows", len(out), flush=True)
     if not rows or not cursor or len(rows) < 1000 or pages > 300: break
 json.dump(out, open(sys.argv[1] if len(sys.argv) > 1 else "data/raw_cc.json", "w"))
