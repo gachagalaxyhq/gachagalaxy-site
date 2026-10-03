@@ -5,6 +5,7 @@ on:
   workflow_dispatch: {}
 permissions:
   contents: write
+  issues: write
 concurrency:
   group: refresh
   cancel-in-progress: false
@@ -35,3 +36,11 @@ jobs:
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "Refresh Collector Crypt prices"
           git push
+      - name: Alert if anything failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "Price refresh failed $(date -u '+%d %b %H:%M UTC')" \
+            --body "The Collector Crypt price refresh failed. The site still shows the last good prices. Run log: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

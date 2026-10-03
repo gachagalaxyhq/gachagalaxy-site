@@ -26,8 +26,14 @@ while True:
         out.append(r)
     pages += 1; cursor = d.get("nextCursor")
     # CC returns priced (for-sale) cards first; stop once a page is not fully priced
-    if sum(1 for x in rows if (x.get("listing") or {}).get("price") is not None) < len(rows): break
+    priced = sum(1 for x in out if x.get("price") is not None)
+    # CC returns priced (for-sale) cards first; stop once a page is not fully priced,
+    # unless we have suspiciously few priced cards (then keep reading everything as a safety net)
+    if sum(1 for x in rows if (x.get("listing") or {}).get("price") is not None) < len(rows) and priced >= 3000: break
     if pages % 10 == 0: print("pages", pages, "rows", len(out), flush=True)
     if not rows or not cursor or len(rows) < 1000 or pages > 300: break
+priced = sum(1 for x in out if x.get("price") is not None)
+print("priced", priced)
+if priced < 1000: sys.exit("FAIL: only %d priced cards from Collector Crypt" % priced)
 json.dump(out, open(sys.argv[1] if len(sys.argv) > 1 else "data/raw_cc.json", "w"))
 print("done pages", pages, "rows", len(out))
