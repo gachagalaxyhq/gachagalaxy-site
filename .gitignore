@@ -1,0 +1,4 @@
+data/raw_cc.json
+__pycache__/
+*.log
+shot_*.json

@@ -1,0 +1,35 @@
+name: Refresh Collector Crypt prices
+on:
+  schedule:
+    - cron: "17 */4 * * *"   # every 4 hours
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch Collector Crypt listings
+        run: python scripts/fetch_raw.py /tmp/raw_cc.json
+      - name: Build data (keeps last good file if bad)
+        run: python scripts/build_cc.py /tmp/raw_cc.json data/cc.json
+      - name: Update history
+        run: python scripts/update_history.py
+      - name: Render pages
+        run: python scripts/render.py
+      - name: Commit if changed
+        run: |
+          git config user.name "Gacha Galaxy"
+          git config user.email "matthew@me3.io"
+          git add data/cc.json data/history.json public/index.html public/platform.html
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Refresh Collector Crypt prices"
+          git push
