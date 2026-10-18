@@ -2,6 +2,7 @@
 import json, html, os, datetime as dt, shutil
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 cc = json.load(open(f"{R}/data/cc.json")); certs = json.load(open(f"{R}/src/certs.json"))
+oc = json.load(open(f"{R}/src/onchain.json")) if os.path.exists(f"{R}/src/onchain.json") else dict(events={})
 EXP = "https://explorer.testnet.chain.robinhood.com/address/0x30dfBCA3978CE186e6107A93cedC7d2971d30950"
 upd = dt.datetime.strptime(cc["updated"], "%Y-%m-%dT%H:%M:%SZ").strftime("%-d %b %Y, %H:%M UTC")
 hist = {}
@@ -31,7 +32,7 @@ for k, c in enumerate(cc["cards"], 1):
         confidence=c["confidence"], tier=c["tier"], prices_used=c["prices_used"], eligible=True)], L=L, H=H))
 cards.sort(key=lambda x: (not x["f"], -x["ga"]))
 df = cards[0]["i"]
-D = dict(df=df, cards=cards, certs=certs, exp=EXP, markets=["Collector Crypt"])
+D = dict(df=df, cards=cards, certs=certs, exp=EXP, oc=oc, markets=["Collector Crypt"])
 os.makedirs(f"{R}/public", exist_ok=True)
 p = open(f"{R}/src/platform.tpl.html", encoding="utf-8").read()
 p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd)

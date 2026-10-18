@@ -24,6 +24,8 @@ jobs:
         run: python scripts/build_cc.py /tmp/raw_cc.json data/cc.json
       - name: Update history
         run: python scripts/update_history.py
+      - name: Read Gacha Mark history from chain (keeps last good file if it fails)
+        run: python scripts/fetch_onchain.py
       - name: Cache card images
         run: pip install -q pillow && python scripts/cache_images.py
       - name: Render pages
@@ -32,7 +34,7 @@ jobs:
         run: |
           git config user.name "Gacha Galaxy"
           git config user.email "matthew@me3.io"
-          git add data/cc.json data/history.json public/index.html public/platform.html public/cards public/assets
+          git add data/cc.json data/history.json src/onchain.json public/index.html public/platform.html public/cards public/assets
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "Refresh Collector Crypt prices"
           git push

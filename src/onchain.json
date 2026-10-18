@@ -1,0 +1,75 @@
+{
+ "chain": "Robinhood Chain testnet",
+ "explorer": "https://explorer.testnet.chain.robinhood.com",
+ "registry": "0x30dfBCA3978CE186e6107A93cedC7d2971d30950",
+ "events": {
+  "109308847": [
+   {
+    "t": "2026-09-23T07:38:27Z",
+    "low": 2586.51,
+    "point": 2900.0,
+    "high": 3213.49,
+    "tx": "0xdf53ee76f0d8288d56aed73ed9e379f6ca9a7e4fb33d8f441fd704bad9c854ca"
+   },
+   {
+    "t": "2026-09-23T07:34:32Z",
+    "low": 2586.51,
+    "point": 2900.0,
+    "high": 3213.49,
+    "tx": "0x5bcddb7f009a8459531a2cfec2916390bf3f89a87a886eceaab158e34a140c94"
+   },
+   {
+    "t": "2026-09-23T07:14:04Z",
+    "low": 2586.51,
+    "point": 2900.0,
+    "high": 3213.49,
+    "tx": "0x7edf40109ebd8362baa1c55b788f0618679150d0ee34506e2dea0b9bbe8cfc9e"
+   }
+  ],
+  "111992917": [
+   {
+    "t": "2026-09-23T07:14:23Z",
+    "low": 249.02,
+    "point": 275.0,
+    "high": 300.98,
+    "tx": "0x8eef2c1996d902b13f047412c34070488f2ebd3b8be6caddb6999fd07dfd7c8b"
+   }
+  ],
+  "153708045": [
+   {
+    "t": "2026-09-23T07:14:19Z",
+    "low": 340.02,
+    "point": 410.0,
+    "high": 479.98,
+    "tx": "0xaeef86f46a9f6341ededd2b2981db4c4cdcc404ecff34f9a75f37f8953fd1b16"
+   }
+  ],
+  "154790134": [
+   {
+    "t": "2026-09-23T07:14:15Z",
+    "low": 524.03,
+    "point": 650.0,
+    "high": 775.97,
+    "tx": "0x3d89e4fd78739a6f7f974f8f0a0ebfa62d0cfe91b1b0426a3c133220d3ad163c"
+   }
+  ],
+  "100863346": [
+   {
+    "t": "2026-09-23T07:14:12Z",
+    "low": 1215.61,
+    "point": 1331.0,
+    "high": 1446.39,
+    "tx": "0x55108180e551c5e12cdcb2af684c84ee9b410f27bbb75fa59ae374d0a6059b30"
+   }
+  ],
+  "118973623": [
+   {
+    "t": "2026-09-23T07:14:08Z",
+    "low": 2875.2,
+    "point": 3200.0,
+    "high": 3524.8,
+    "tx": "0x098b67e3e0dfa043e43a1c3fdd3bea17db6eae5b4575022334a3c7ba8edf161e"
+   }
+  ]
+ }
+}
