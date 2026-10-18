@@ -26,7 +26,7 @@ for k, c in enumerate(cc["cards"], 1):
     key = f"{c['set']}|{c['no']}|{c['grade']}"
     L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"]] for l in c["listings"]]
     H = hist.get(key) or [[cc["updated"][:10], c["point"], None]]
-    cards.append(dict(i=k, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
+    cards.append(dict(i=k, k=key, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
         la=c["low_ask"], se=True, f=c["featured"], lp="Collector Crypt", g=c["grade"], ga=c["point"], gn=c["n"],
         u=None, im=(f"https://gachagalaxy-site.pages.dev/cards/{c['id']}.webp" if os.path.exists(f"{R}/public/cards/{c['id']}.webp") else c["img"]), pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
         confidence=c["confidence"], tier=c["tier"], prices_used=c["prices_used"], eligible=True)], L=L, H=H))
@@ -35,6 +35,7 @@ df = cards[0]["i"]
 D = dict(df=df, cards=cards, certs=certs, exp=EXP, oc=oc, markets=["Collector Crypt"])
 SB_KEY = "sb_publishable_zuvJafFZrz4JStpgfljeUQ_Lj5l-05E"  # publishable key: safe in the browser, RLS protects data
 os.makedirs(f"{R}/public", exist_ok=True)
+json.dump(dict(updated=cc["updated"], cards={c["k"]: [c["cn"], c["cl"], c["g"], c["ga"]] for c in cards}), open(f"{R}/public/prices.json", "w"), separators=(",", ":"))  # read by price-alert function
 p = open(f"{R}/src/platform.tpl.html", encoding="utf-8").read()
 p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd).replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
 open(f"{R}/public/platform.html", "w", encoding="utf-8").write(p)
