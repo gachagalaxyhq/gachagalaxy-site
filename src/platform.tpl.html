@@ -64,7 +64,7 @@ table{border-collapse:collapse;width:100%}
 .col-row b{color:var(--txt)}.col-row .rm{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:13px}
 .col-row .rm:hover{color:var(--pink);border-color:rgba(244,114,182,.4)}
 .col-note{font-size:13px;color:var(--dim);margin-top:14px}
-@media (max-width:620px){.col-row{grid-template-columns:1fr auto;gap:10px}.col-row .c2{grid-column:1/-1;order:3}.col-auth{padding:22px}}
+@media (max-width:620px){.tabs{order:4;flex-basis:100%;margin-left:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tabs a{flex:none;white-space:nowrap}.col-row{grid-template-columns:1fr auto;gap:10px}.col-row .c2{grid-column:1/-1;order:3}.col-auth{padding:22px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 header.top{position:sticky;top:0;z-index:20;background:rgba(7,6,13,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
