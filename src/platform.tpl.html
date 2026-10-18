@@ -56,6 +56,7 @@ table{border-collapse:collapse;width:100%}
 .linkb{background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px;padding:0;margin-top:14px}
 .col-top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .col-who{font-size:14px;color:var(--dim)}.col-who b{color:var(--mut)}
+.col-foot{margin:22px 0 8px;text-align:center}.col-foot .linkb{font-size:14px}
 .col-add{display:flex;gap:10px;padding:14px;margin-bottom:16px;flex-wrap:wrap}
 .col-add input{flex:1;min-width:180px;background:rgba(7,6,13,.6);border:1px solid var(--line2);border-radius:12px;color:var(--txt);font-family:var(--mono);font-size:16px;padding:12px 14px}
 .col-add input:focus{outline:none;border-color:var(--teal)}
@@ -412,14 +413,16 @@ function home(){setTab('home');const c=D.certs.find(x=>x.cert===SEL)||D.certs[0]
  document.querySelectorAll('.ot tbody tr').forEach(r=>r.onclick=e=>{if(e.target.closest('a'))return;$('#lki').value=r.dataset.c;go(r.dataset.c);window.scrollTo({top:0,behavior:'smooth'})});window.scrollTo(0,0)}
 /* ---------- My Collection (Supabase email-code login) ---------- */
 const SB_URL='__SB_URL__',SB_KEY='__SB_KEY__';let SB=null,SBload=null,CS={email:'',step:'email',ret:'collection'};
+ const withTO=(p,ms)=>Promise.race([p,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),ms||10000))]);let COLSEQ=0;
 function sbReady(){if(SB)return Promise.resolve(SB);if(SBload)return SBload;
  SBload=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
- s.onload=()=>{SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});SB.auth.onAuthStateChange(()=>{if(location.hash.startsWith('#/collection'))collection();else if(location.hash.startsWith('#/watchlist'))watchlist()});ok(SB)};
+ s.onload=()=>{SB=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});SB.auth.onAuthStateChange(()=>setTimeout(()=>{if(location.hash.startsWith('#/collection'))collection();else if(location.hash.startsWith('#/watchlist'))watchlist()},0));ok(SB)};
  s.onerror=()=>no(new Error('load'));document.head.appendChild(s)});return SBload}
 function cMsg(t,k){const m=$('#cmsg');if(m){m.textContent=t;m.className='msg '+(k||'')}}
-async function collection(){setTab('collection');V.innerHTML='<h1 class="pg">My Collection</h1><p class="pg-sub">Loading…</p>';
- let sb;try{sb=await sbReady()}catch(e){V.innerHTML='<h1 class="pg">My Collection</h1><div class="panel empty">Sign-in could not load. Check your connection and refresh.</div>';return}
- const {data:{session}}=await sb.auth.getSession();if(!session){CS.ret='collection';return colLogin()}colList(session)}
+async function collection(){const seq=++COLSEQ;setTab('collection');V.innerHTML='<h1 class="pg">My Collection</h1><p class="pg-sub">Loading…</p>';
+ const fail=()=>{if(seq!==COLSEQ)return;V.innerHTML='<h1 class="pg">My Collection</h1><div class="panel empty">This is taking longer than it should. <button class="linkb" id="cretry" style="margin:0">Try again</button></div>';const r=$('#cretry');if(r)r.onclick=collection};
+ let sb;try{sb=await withTO(sbReady())}catch(e){if(seq===COLSEQ)V.innerHTML='<h1 class="pg">My Collection</h1><div class="panel empty">Sign-in could not load. Check your connection and refresh.</div>';return}
+ try{const {data:{session}}=await withTO(sb.auth.getSession());if(seq!==COLSEQ)return;if(!session){CS.ret='collection';return colLogin()}await withTO(colList(session,seq),20000)}catch(e){fail()}}
 function colLogin(){const codeStep=CS.step==='code';const W=CS.ret==='watchlist';
  V.innerHTML=`<h1 class="pg">${W?'Watchlist':'My Collection'}</h1><p class="pg-sub">${W?'Star cards to follow their price. We email you when one moves 10% or more.':'Save your PSA slabs and see which ones carry a Gacha Mark. Private to you.'}</p>
  <div class="panel col-auth">${codeStep?`<h2>Check your email</h2><p>We sent a sign-in link to <b>${esc(CS.email)}</b>. Tap it on this device to sign in. It expires in 10 minutes.</p>
@@ -433,7 +436,7 @@ function colLogin(){const codeStep=CS.step==='code';const W=CS.ret==='watchlist'
  else{$('#cf1').onsubmit=async e=>{e.preventDefault();const em=$('#cemail').value.trim().toLowerCase();cMsg('Sending…');
    const {error}=await SB.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname+'#/'+CS.ret}});
    if(error)return cMsg(/rate|many/i.test(error.message)?'Too many sign-in emails requested. Wait a few minutes and try again.':'Could not send the email. Check the address.','err');CS.email=em;CS.step='code';try{sessionStorage.setItem('gg_ret',CS.ret)}catch(_){}colLogin()}}}
-async function colList(session){const [{data,error},{data:rq}]=await Promise.all([SB.from('collection').select('id,psa_cert,added_at').order('added_at',{ascending:false}),SB.from('mark_requests').select('id,psa_cert,status,reason')]);
+async function colList(session,seq){const [{data,error},{data:rq}]=await withTO(Promise.all([SB.from('collection').select('id,psa_cert,added_at').order('added_at',{ascending:false}),SB.from('mark_requests').select('id,psa_cert,status,reason')]),15000);if(seq!==undefined&&seq!==COLSEQ)return;
  const reqs=Object.fromEntries((rq||[]).map(x=>[x.psa_cert,x]));const RQL={requested:['p-amb','Mark requested'],in_review:['p-amb','In review'],approved:['p-grn','Approved'],rejected:['p-dim','Not approved']};
  const rows=data||[];const marks=Object.fromEntries(D.certs.map(c=>[c.cert,c]));
  const row=r=>{const m=marks[r.psa_cert];const st=m?markStatus(m):null;
@@ -441,11 +444,11 @@ async function colList(session){const [{data,error},{data:rq}]=await Promise.all
   <div class="c2">${m?`<span class="k">Card</span><b>${esc(m.name)} ${esc(m.num)}</b> <span class="pill ${st.active?'p-grn':'p-amb'}" style="margin-left:6px"><i></i>${st.active?'Gacha Mark':'Mark expired'}</span>`:(()=>{const q=reqs[r.psa_cert];if(!q)return `<span class="k">Gacha Mark</span><span class="pend">No Mark yet</span>`;const L=RQL[q.status]||RQL.requested;return `<span class="k">Gacha Mark</span><span class="pill ${L[0]}"><i></i>${L[1]}</span>${q.reason?`<small class="rq-why">${esc(q.reason)}</small>`:''}`})()}</div>
   <div>${m?`<a class="btn btn-g" href="#/cert/${m.cert}">Certificate</a>`:!reqs[r.psa_cert]?`<button class="btn btn-g rq" data-c="${esc(r.psa_cert)}">Request a Mark</button>`:reqs[r.psa_cert].status==='requested'?`<button class="linkb rq-x" data-id="${reqs[r.psa_cert].id}" style="margin:0">Cancel request</button>`:''}</div><div><button class="rm" data-id="${r.id}" aria-label="Remove cert ${esc(r.psa_cert)}">Remove</button></div></div>`};
  V.innerHTML=`<div class="col-top"><div><h1 class="pg">My Collection</h1><p class="pg-sub" style="margin-bottom:0">${rows.length} slab${rows.length===1?'':'s'} saved. Only you can see this list.</p></div>
- <div class="col-who">Signed in as <b>${esc(session.user.email)}</b> · <button class="linkb" id="cout" style="margin:0">Sign out</button></div></div>
+ <div class="col-who">Signed in as <b>${esc(session.user.email)}</b></div></div>
  <form class="panel col-add" id="cadd"><input id="ccert" inputmode="numeric" placeholder="PSA cert number, e.g. 109308847" aria-label="PSA cert number" maxlength="10" required><button class="btn btn-p">Add slab</button></form><div id="cmsg" class="msg" role="status"></div>
  ${error?'<div class="panel empty">Could not load your collection. Refresh to try again.</div>':rows.length?`<div class="list">${rows.map(row).join('')}</div>`:'<div class="panel empty"><b>No slabs yet.</b> Add a PSA cert number above.</div>'}
  <p class="col-note">PSA certs only for now. Card details for certs without a Mark arrive once PSA lookup is connected.</p>
- <details class="panel rq-how"><summary>How a Gacha Mark request works</summary><ol><li>We check the cert with PSA: it must exist and match the card and grade.</li><li>We price the card. Cards worth under $50, or without enough price data, are not Marked yet.</li><li>If it passes, the Mark and its fair price are published onchain on Robinhood Chain, with a public certificate page.</li></ol><p>Plain Gacha Marks are free. A Mark is valid for 30 days and refreshes while the card still qualifies. Status updates show here.</p></details>`;
+ <details class="panel rq-how"><summary>How a Gacha Mark request works</summary><ol><li>We check the cert with PSA: it must exist and match the card and grade.</li><li>We price the card. Cards worth under $50, or without enough price data, are not Marked yet.</li><li>If it passes, the Mark and its fair price are published onchain on Robinhood Chain, with a public certificate page.</li></ol><p>Plain Gacha Marks are free. A Mark is valid for 30 days and refreshes while the card still qualifies. Status updates show here.</p></details><div class="col-foot"><button class="linkb" id="cout">Sign out</button></div>`;
  $('#cout').onclick=async()=>{await SB.auth.signOut();collection()};
  $('#cadd').onsubmit=async e=>{e.preventDefault();const c=$('#ccert').value.replace(/\D/g,'');if(!/^\d{6,10}$/.test(c))return cMsg('A PSA cert number is 6 to 10 digits.','err');
   const {error}=await SB.from('collection').insert({psa_cert:c});if(error)return cMsg(error.code==='23505'?'That cert is already in your collection.':'Could not add it. Try again.','err');colList(session)};
@@ -462,9 +465,10 @@ async function starInit(c){const b=$('#star');if(!b||!c.k)return;let s=null;try{
   if(on()){const w=WL.find(w=>w.card_key===c.k);await SB.from('watchlist').delete().eq('id',w.id)}
   else{const {error}=await SB.from('watchlist').insert({card_key:c.k,card_name:c.cn,base_price:c.ga,ref_price:c.ga});if(error&&error.code!=='23505'){b.disabled=false;b.textContent='Could not save, try again';return}}
   await wlLoad();b.disabled=false;paint()}}
-async function watchlist(){setTab('watchlist');V.innerHTML='<h1 class="pg">Watchlist</h1><p class="pg-sub">Loading…</p>';
- let s;try{s=await wlLoad()}catch(e){V.innerHTML='<h1 class="pg">Watchlist</h1><div class="panel empty">Sign-in could not load. Check your connection and refresh.</div>';return}
- if(!s){CS.ret='watchlist';return colLogin()}
+async function watchlist(){const seq=++COLSEQ;setTab('watchlist');V.innerHTML='<h1 class="pg">Watchlist</h1><p class="pg-sub">Loading…</p>';
+ const fail=()=>{if(seq!==COLSEQ)return;V.innerHTML='<h1 class="pg">Watchlist</h1><div class="panel empty">This is taking longer than it should. <button class="linkb" id="wretry" style="margin:0">Try again</button></div>';const r=$('#wretry');if(r)r.onclick=watchlist};
+ let s;try{s=await withTO(wlLoad(),20000)}catch(e){return fail()}
+ if(seq!==COLSEQ)return;if(!s){CS.ret='watchlist';return colLogin()}
  const pct=(a,b)=>{const p=(a-b)/b*100;return `<span class="${p>0?'up':p<0?'down':''}">${p>0?'+':''}${p.toFixed(1)}%</span>`};
  const row=w=>{const c=byKey[w.card_key];const now=c?c.ga:null;
   return `<div class="panel wl-row"><div class="wl-c">${c?img(c):'<div class="ph-img">Image</div>'}<div>${c?`<a href="#/card/${c.i}"><h3>${esc(c.cn)}</h3></a><div class="st">${esc(c.cl)} · ${esc(c.g)}</div>`:`<h3>${esc(w.card_name)}</h3><div class="st">No longer listed</div>`}</div></div>
@@ -472,9 +476,9 @@ async function watchlist(){setTab('watchlist');V.innerHTML='<h1 class="pg">Watch
   <div class="cell"><span>Since added</span><b class="num">${now?pct(now,w.base_price):'—'}</b><small>from ${money(w.base_price)}</small></div>
   <div class="wl-a"><label class="wl-t"><input type="checkbox" data-id="${w.id}" ${w.alerts?'checked':''}> Email alerts</label><button class="rm" data-rm="${w.id}" aria-label="Stop watching ${esc(w.card_name)}">Remove</button></div></div>`};
  V.innerHTML=`<div class="col-top"><div><h1 class="pg">Watchlist</h1><p class="pg-sub" style="margin-bottom:0">${WL.length} card${WL.length===1?'':'s'}. We email you when a price moves 10% or more.</p></div>
- <div class="col-who">Signed in as <b>${esc(s.user.email)}</b> · <button class="linkb" id="cout" style="margin:0">Sign out</button></div></div><div id="cmsg" class="msg" role="status"></div>
+ <div class="col-who">Signed in as <b>${esc(s.user.email)}</b></div></div><div id="cmsg" class="msg" role="status"></div>
  ${WL.length?`<div class="list">${WL.map(row).join('')}</div>`:`<div class="panel empty"><b>No cards yet.</b> Open any card and tap <b>☆ Watch price</b>. <a href="#/cards">Browse cards</a></div>`}
- <p class="col-note">Prices are median asking prices from tracked listings, updated every 4 hours. Not completed sales.</p>`;
+ <p class="col-note">Prices are median asking prices from tracked listings, updated every 4 hours. Not completed sales.</p><div class="col-foot"><button class="linkb" id="cout">Sign out</button></div>`;
  $('#cout').onclick=async()=>{await SB.auth.signOut();watchlist()};
  V.querySelectorAll('.wl-t input').forEach(i=>i.onchange=async()=>{const {error}=await SB.from('watchlist').update({alerts:i.checked}).eq('id',i.dataset.id);if(error){i.checked=!i.checked;cMsg('Could not save. Try again.','err')}else cMsg(i.checked?'Alerts on.':'Alerts off.','ok')});
  V.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{b.disabled=true;await SB.from('watchlist').delete().eq('id',b.dataset.rm);watchlist()})}
