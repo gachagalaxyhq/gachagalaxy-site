@@ -62,6 +62,7 @@ table{border-collapse:collapse;width:100%}
 .col-row{display:grid;grid-template-columns:1.4fr 1.4fr auto auto;gap:16px;align-items:center;padding:14px 18px}
 .col-row .k{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:700;display:block}
 .col-row b{color:var(--txt)}.col-row .rm{background:none;border:1px solid var(--line2);color:var(--mut);border-radius:10px;padding:8px 12px;cursor:pointer;font:inherit;font-size:13px}
+.rq-why{display:block;font-size:12px;color:var(--dim);margin-top:4px}.rq-how{margin-top:14px;padding:14px 18px}.rq-how summary{cursor:pointer;font-weight:700}.rq-how ol{margin:10px 0 8px 20px;line-height:1.6}.rq-how p{margin:0;color:var(--mut);font-size:14px}
 .col-row .rm:hover{color:var(--pink);border-color:rgba(244,114,182,.4)}
 .col-note{font-size:13px;color:var(--dim);margin-top:14px}
 @media (max-width:620px){.tabs{order:4;flex-basis:100%;margin-left:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tabs a{flex:none;white-space:nowrap}.col-row{grid-template-columns:1fr auto;gap:10px}.col-row .c2{grid-column:1/-1;order:3}.col-auth{padding:22px}}
@@ -432,20 +433,24 @@ function colLogin(){const codeStep=CS.step==='code';const W=CS.ret==='watchlist'
  else{$('#cf1').onsubmit=async e=>{e.preventDefault();const em=$('#cemail').value.trim().toLowerCase();cMsg('Sending…');
    const {error}=await SB.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname+'#/'+CS.ret}});
    if(error)return cMsg(/rate|many/i.test(error.message)?'Too many sign-in emails requested. Wait a few minutes and try again.':'Could not send the email. Check the address.','err');CS.email=em;CS.step='code';try{sessionStorage.setItem('gg_ret',CS.ret)}catch(_){}colLogin()}}}
-async function colList(session){const {data,error}=await SB.from('collection').select('id,psa_cert,added_at').order('added_at',{ascending:false});
+async function colList(session){const [{data,error},{data:rq}]=await Promise.all([SB.from('collection').select('id,psa_cert,added_at').order('added_at',{ascending:false}),SB.from('mark_requests').select('id,psa_cert,status,reason')]);
+ const reqs=Object.fromEntries((rq||[]).map(x=>[x.psa_cert,x]));const RQL={requested:['p-amb','Mark requested'],in_review:['p-amb','In review'],approved:['p-grn','Approved'],rejected:['p-dim','Not approved']};
  const rows=data||[];const marks=Object.fromEntries(D.certs.map(c=>[c.cert,c]));
  const row=r=>{const m=marks[r.psa_cert];const st=m?markStatus(m):null;
   return `<div class="panel col-row"><div><span class="k">PSA cert</span><b class="num">${esc(r.psa_cert)}</b></div>
-  <div class="c2">${m?`<span class="k">Card</span><b>${esc(m.name)} ${esc(m.num)}</b> <span class="pill ${st.active?'p-grn':'p-amb'}" style="margin-left:6px"><i></i>${st.active?'Gacha Mark':'Mark expired'}</span>`:`<span class="k">Gacha Mark</span><span class="pend">No Mark yet</span>`}</div>
-  <div>${m?`<a class="btn btn-g" href="#/cert/${m.cert}">Certificate</a>`:''}</div><div><button class="rm" data-id="${r.id}" aria-label="Remove cert ${esc(r.psa_cert)}">Remove</button></div></div>`};
+  <div class="c2">${m?`<span class="k">Card</span><b>${esc(m.name)} ${esc(m.num)}</b> <span class="pill ${st.active?'p-grn':'p-amb'}" style="margin-left:6px"><i></i>${st.active?'Gacha Mark':'Mark expired'}</span>`:(()=>{const q=reqs[r.psa_cert];if(!q)return `<span class="k">Gacha Mark</span><span class="pend">No Mark yet</span>`;const L=RQL[q.status]||RQL.requested;return `<span class="k">Gacha Mark</span><span class="pill ${L[0]}"><i></i>${L[1]}</span>${q.reason?`<small class="rq-why">${esc(q.reason)}</small>`:''}`})()}</div>
+  <div>${m?`<a class="btn btn-g" href="#/cert/${m.cert}">Certificate</a>`:!reqs[r.psa_cert]?`<button class="btn btn-g rq" data-c="${esc(r.psa_cert)}">Request a Mark</button>`:reqs[r.psa_cert].status==='requested'?`<button class="linkb rq-x" data-id="${reqs[r.psa_cert].id}" style="margin:0">Cancel request</button>`:''}</div><div><button class="rm" data-id="${r.id}" aria-label="Remove cert ${esc(r.psa_cert)}">Remove</button></div></div>`};
  V.innerHTML=`<div class="col-top"><div><h1 class="pg">My Collection</h1><p class="pg-sub" style="margin-bottom:0">${rows.length} slab${rows.length===1?'':'s'} saved. Only you can see this list.</p></div>
  <div class="col-who">Signed in as <b>${esc(session.user.email)}</b> · <button class="linkb" id="cout" style="margin:0">Sign out</button></div></div>
  <form class="panel col-add" id="cadd"><input id="ccert" inputmode="numeric" placeholder="PSA cert number, e.g. 109308847" aria-label="PSA cert number" maxlength="10" required><button class="btn btn-p">Add slab</button></form><div id="cmsg" class="msg" role="status"></div>
  ${error?'<div class="panel empty">Could not load your collection. Refresh to try again.</div>':rows.length?`<div class="list">${rows.map(row).join('')}</div>`:'<div class="panel empty"><b>No slabs yet.</b> Add a PSA cert number above.</div>'}
- <p class="col-note">PSA certs only for now. Card details for certs without a Mark arrive once PSA lookup is connected.</p>`;
+ <p class="col-note">PSA certs only for now. Card details for certs without a Mark arrive once PSA lookup is connected.</p>
+ <details class="panel rq-how"><summary>How a Gacha Mark request works</summary><ol><li>We check the cert with PSA: it must exist and match the card and grade.</li><li>We price the card. Cards worth under $50, or without enough price data, are not Marked yet.</li><li>If it passes, the Mark and its fair price are published onchain on Robinhood Chain, with a public certificate page.</li></ol><p>Plain Gacha Marks are free. A Mark is valid for 30 days and refreshes while the card still qualifies. Status updates show here.</p></details>`;
  $('#cout').onclick=async()=>{await SB.auth.signOut();collection()};
  $('#cadd').onsubmit=async e=>{e.preventDefault();const c=$('#ccert').value.replace(/\D/g,'');if(!/^\d{6,10}$/.test(c))return cMsg('A PSA cert number is 6 to 10 digits.','err');
   const {error}=await SB.from('collection').insert({psa_cert:c});if(error)return cMsg(error.code==='23505'?'That cert is already in your collection.':'Could not add it. Try again.','err');colList(session)};
+ V.querySelectorAll('.rq').forEach(b=>b.onclick=async()=>{b.disabled=true;b.textContent='Sending…';const {error}=await SB.from('mark_requests').insert({psa_cert:b.dataset.c});if(error&&error.code!=='23505'){b.disabled=false;b.textContent='Request a Mark';return cMsg('Could not send the request. Try again.','err')}colList(session).then(()=>cMsg('Request sent. We will review cert '+b.dataset.c+'.','ok'))});
+ V.querySelectorAll('.rq-x').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await SB.from('mark_requests').delete().eq('id',b.dataset.id);if(error){b.disabled=false;return cMsg('Could not cancel. Try again.','err')}colList(session)});
  V.querySelectorAll('.rm').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await SB.from('collection').delete().eq('id',b.dataset.id);if(error){b.disabled=false;return cMsg('Could not remove it. Try again.','err')}colList(session)})}
 /* ---------- Watchlist + price alerts ---------- */
 const byKey=Object.fromEntries(D.cards.map(c=>[c.k,c]));let WL=null;
