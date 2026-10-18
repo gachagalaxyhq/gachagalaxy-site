@@ -33,9 +33,10 @@ for k, c in enumerate(cc["cards"], 1):
 cards.sort(key=lambda x: (not x["f"], -x["ga"]))
 df = cards[0]["i"]
 D = dict(df=df, cards=cards, certs=certs, exp=EXP, oc=oc, markets=["Collector Crypt"])
+SB_KEY = "sb_publishable_zuvJafFZrz4JStpgfljeUQ_Lj5l-05E"  # publishable key: safe in the browser, RLS protects data
 os.makedirs(f"{R}/public", exist_ok=True)
 p = open(f"{R}/src/platform.tpl.html", encoding="utf-8").read()
-p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd)
+p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd).replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
 open(f"{R}/public/platform.html", "w", encoding="utf-8").write(p)
 # scanner: one row per card, gap < 300%, asks >= $20, grade 8+, 10 below then 10 above
 rows = []
