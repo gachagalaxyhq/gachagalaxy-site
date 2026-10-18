@@ -24,7 +24,7 @@ def clean_name(n):
 cards = []
 for k, c in enumerate(cc["cards"], 1):
     key = f"{c['set']}|{c['no']}|{c['grade']}"
-    L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"]] for l in c["listings"]]
+    L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"], (l.get("cert") or None) if c["grade"].startswith("PSA") else None] for l in c["listings"]]
     H = hist.get(key) or [[cc["updated"][:10], c["point"], None]]
     cards.append(dict(i=k, k=key, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
         la=c["low_ask"], se=True, f=c["featured"], lp="Collector Crypt", g=c["grade"], ga=c["point"], gn=c["n"],
