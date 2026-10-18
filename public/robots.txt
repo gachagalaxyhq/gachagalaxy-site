@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /accounts/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /app
+
+Sitemap: https://gachagalaxy.io/sitemap.xml

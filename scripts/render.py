@@ -66,6 +66,11 @@ h = h.replace("gg-platform-final.html", "platform.html")
 open(f"{R}/public/index.html", "w", encoding="utf-8").write(h)
 for f in ["og-image-new.png"]:
     if os.path.exists(f"{R}/{f}"): shutil.copy(f"{R}/{f}", f"{R}/public/{f}")
+for f in ["favicon.ico", "apple-touch-icon.png", "robots.txt"]:  # served on gachagalaxy.io via Worker gg-paths
+    if os.path.exists(f"{R}/static/{f}"): shutil.copy(f"{R}/static/{f}", f"{R}/public/{f}")
+_d = __import__("datetime").date.today().isoformat()
+open(f"{R}/public/sitemap.xml", "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(
+    f"<url><loc>https://gachagalaxy.io{u}</loc><lastmod>{_d}</lastmod></url>\n" for u in ["/", "/platform", "/terms/", "/privacy/", "/risk-disclosure/"]) + "</urlset>\n")
 import re, hashlib, base64
 os.makedirs(f"{R}/public/assets", exist_ok=True)
 EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/svg+xml":"svg","image/webp":"webp"}
