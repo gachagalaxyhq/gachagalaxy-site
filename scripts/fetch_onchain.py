@@ -4,10 +4,14 @@ If the explorer fails or returns nothing, the last good file is kept and the scr
 import json, os, sys, urllib.request
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "https://explorer.testnet.chain.robinhood.com"
-ADDR = "0x30dfBCA3978CE186e6107A93cedC7d2971d30950"
+# Current registry first (admin: Trust Wallet). The old 23 Sep registry is read too so its history stays visible.
+ADDR = "0x2A585396dd0248A060045b3f557076fB1B4Cb0eb"
+REGS = [ADDR, "0x30dfBCA3978CE186e6107A93cedC7d2971d30950"]
 def get(u): return json.load(urllib.request.urlopen(urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0"}), timeout=30))
 def fetch():
-    out, url = {}, f"{BASE}/api/v2/addresses/{ADDR}/logs"
+  out = {}
+  for REG in REGS:
+    url = f"{BASE}/api/v2/addresses/{REG}/logs"
     while url:
         d = get(url)
         for x in d["items"]:
@@ -17,8 +21,8 @@ def fetch():
             out.setdefault(p["certId"], []).append(dict(t=t, low=int(p["fmvLow"]) / 100, point=int(p["fmvPoint"]) / 100,
                 high=int(p["fmvHigh"]) / 100, tx=x["transaction_hash"]))
         n = d.get("next_page_params")
-        url = f"{BASE}/api/v2/addresses/{ADDR}/logs?" + "&".join(f"{k}={v}" for k, v in n.items()) if n else None
-    return out
+        url = f"{BASE}/api/v2/addresses/{REG}/logs?" + "&".join(f"{k}={v}" for k, v in n.items()) if n else None
+  return out
 try:
     out = fetch()
 except Exception as e:

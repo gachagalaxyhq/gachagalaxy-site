@@ -3,7 +3,7 @@ import json, html, os, datetime as dt, shutil
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 cc = json.load(open(f"{R}/data/cc.json")); certs = json.load(open(f"{R}/src/certs.json"))
 oc = json.load(open(f"{R}/src/onchain.json")) if os.path.exists(f"{R}/src/onchain.json") else dict(events={})
-EXP = "https://explorer.testnet.chain.robinhood.com/address/0x30dfBCA3978CE186e6107A93cedC7d2971d30950"
+EXP = "https://explorer.testnet.chain.robinhood.com/address/0x2A585396dd0248A060045b3f557076fB1B4Cb0eb"
 upd = dt.datetime.strptime(cc["updated"], "%Y-%m-%dT%H:%M:%SZ").strftime("%-d %b %Y, %H:%M UTC")
 hist = {}
 hp = f"{R}/data/history.json"

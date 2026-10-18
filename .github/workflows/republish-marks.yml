@@ -1,0 +1,31 @@
+name: Republish Gacha Marks (testnet, monthly)
+on:
+  schedule:
+    - cron: "0 3 1 * *"   # 1st of each month, 10:00 ICT
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  issues: write
+jobs:
+  republish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm i --no-save ethers@6
+      - name: Republish all Marks
+        env:
+          TESTNET_BOT_KEYSTORE: ${{ secrets.TESTNET_BOT_KEYSTORE }}
+          TESTNET_BOT_PASSPHRASE: ${{ secrets.TESTNET_BOT_PASSPHRASE }}
+        run: node scripts/republish_marks.mjs
+      - name: Alert if it failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "Gacha Mark republish failed $(date -u '+%d %b')" \
+            --body "Monthly testnet republish failed (often: bot wallet out of test ETH, 0x612548Ee6FaDd7511F271Da37b511576Efb27a1c). Marks expire 30 days after their last publish. Log: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
