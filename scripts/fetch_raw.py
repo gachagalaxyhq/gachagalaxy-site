@@ -1,6 +1,7 @@
 """Fetch all Collector Crypt Pokemon listings (compact) -> data/raw_cc.json"""
 import json, os, time, urllib.request, urllib.parse, sys
 BASE = "https://cc-proxy.matthew-dd0.workers.dev/marketplace"
+STEP = 200  # upstream now rejects larger pages
 KEEP = ["id","itemName","category","grade","gradeNum","gradingCompany","gradingID","insuredValue",
         "listedAt","year","set","serial","frontImage","nftAddress","nftStatus","language"]
 def get(params):
@@ -31,7 +32,7 @@ while True:
     # unless we have suspiciously few priced cards (then keep reading everything as a safety net)
     if sum(1 for x in rows if (x.get("listing") or {}).get("price") is not None) < len(rows) and priced >= 3000: break
     if pages % 10 == 0: print("pages", pages, "rows", len(out), flush=True)
-    if not rows or not cursor or len(rows) < 1000 or pages > 300: break
+    if not rows or not cursor or len(rows) < STEP or pages > 300: break
 priced = sum(1 for x in out if x.get("price") is not None)
 print("priced", priced)
 if priced < 1000: sys.exit("FAIL: only %d priced cards from Collector Crypt" % priced)
