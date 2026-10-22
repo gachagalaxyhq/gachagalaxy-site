@@ -19,6 +19,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Fetch Collector Crypt listings
+        env:
+          CC_PROXY_KEY: ${{ secrets.CC_PROXY_KEY }}
         run: python scripts/fetch_raw.py /tmp/raw_cc.json
       - name: Build data (keeps last good file if bad)
         run: python scripts/build_cc.py /tmp/raw_cc.json data/cc.json

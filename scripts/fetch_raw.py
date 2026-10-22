@@ -1,13 +1,13 @@
 """Fetch all Collector Crypt Pokemon listings (compact) -> data/raw_cc.json"""
-import json, time, urllib.request, urllib.parse, sys
-BASE = "https://api.collectorcrypt.com/marketplace"
+import json, os, time, urllib.request, urllib.parse, sys
+BASE = "https://cc-proxy.matthew-dd0.workers.dev/marketplace"
 KEEP = ["id","itemName","category","grade","gradeNum","gradingCompany","gradingID","insuredValue",
         "listedAt","year","set","serial","frontImage","nftAddress","nftStatus","language"]
 def get(params):
     url = BASE + "?" + urllib.parse.urlencode(params)
     for a in range(4):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (GachaGalaxy price feed)"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (GachaGalaxy price feed)", "x-cc-key": os.environ.get("CC_PROXY_KEY", "")})
             with urllib.request.urlopen(req, timeout=60) as r:
                 return json.load(r)
         except Exception as e:
@@ -15,7 +15,7 @@ def get(params):
     raise RuntimeError("fetch failed")
 out, cursor, pages = [], None, 0
 while True:
-    p = {"orderBy": "listedDateDesc", "step": 1000, "categories": "Pokemon"}
+    p = {"orderBy": "listedDateDesc", "step": 200, "categories": "Pokemon"}
     if cursor: p["cursor"] = cursor
     d = get(p); rows = d.get("filterNFtCard") or []
     for x in rows:
