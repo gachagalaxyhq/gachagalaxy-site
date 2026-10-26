@@ -518,5 +518,5 @@ function start(){MKready=loadMarks();window.addEventListener('hashchange',route)
  MKready.then(ch=>{const a=location.hash.replace(/^#\/?/,'').split('/')[0];if(ch&&['','home','certified','cert','cards'].includes(a))route()})}
 if(/access_token=|error_description=/.test(location.hash)){V.innerHTML='<p class="pg-sub">Signing you in…</p>';sbReady().then(sb=>sb.auth.getSession()).finally(()=>{history.replaceState(null,'',location.pathname+'#/'+(sessionStorage.getItem('gg_ret')||'collection'));start()})}
 else{start()}
-</script><script>(function(){var m=/^\/verify\/(?:([A-Za-z]{2,4})\/)?([0-9]{6,12})\/?$/.exec(location.pathname);if(m)location.replace('/platform#\/cert\/'+m[2])})();</script>
+</script><script>(function(){var m=/^\/verify\/(?:([A-Za-z]{2,4})\/)?([0-9]{6,12})\/?$/.exec(location.pathname);if(m)history.replaceState(null,'','/platform#/cert/'+m[2])})();</script>
 </body></html>

@@ -77,7 +77,6 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  if(test){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...amb);doc.text('Pre-production record on Robinhood Chain testnet. Not a production Gacha Mark.',M,H-15)}
  if(opt&&opt.fingerprint){doc.setFont('helvetica','normal');doc.setFontSize(5.6);doc.setTextColor(135);doc.text('Record fingerprint '+opt.fingerprint+'  -  recompute it from the certificate page to check this copy.',M,H-4)}
  return doc}
-if(typeof module!=='undefined')
 function buildMarksPdf(jsPDF,list,now,opt){
  opt=opt||{};const doc=new jsPDF({unit:'mm',format:'a4'});const W=210,M=12,H=297;
  const d=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}):'-';
@@ -99,4 +98,4 @@ function buildMarksPdf(jsPDF,list,now,opt){
  doc.setFontSize(5.6);doc.setTextColor(135);
  doc.text('Reference prices and checked grading details, not offers, and not proof of physical authenticity.',M,H-8);
  return doc}
-module.exports={buildMarkPdf,markPdfStatus,markPdfAscii,buildMarksPdf};
+if(typeof module!=='undefined')module.exports={buildMarkPdf,markPdfStatus,markPdfAscii,buildMarksPdf};

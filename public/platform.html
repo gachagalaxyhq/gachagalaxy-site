@@ -472,7 +472,6 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  if(test){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...amb);doc.text('Pre-production record on Robinhood Chain testnet. Not a production Gacha Mark.',M,H-15)}
  if(opt&&opt.fingerprint){doc.setFont('helvetica','normal');doc.setFontSize(5.6);doc.setTextColor(135);doc.text('Record fingerprint '+opt.fingerprint+'  -  recompute it from the certificate page to check this copy.',M,H-4)}
  return doc}
-if(typeof module!=='undefined')
 function buildMarksPdf(jsPDF,list,now,opt){
  opt=opt||{};const doc=new jsPDF({unit:'mm',format:'a4'});const W=210,M=12,H=297;
  const d=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}):'-';
@@ -494,7 +493,7 @@ function buildMarksPdf(jsPDF,list,now,opt){
  doc.setFontSize(5.6);doc.setTextColor(135);
  doc.text('Reference prices and checked grading details, not offers, and not proof of physical authenticity.',M,H-8);
  return doc}
-module.exports={buildMarkPdf,markPdfStatus,markPdfAscii,buildMarksPdf};
+
 
 function gauge(c){const C=213.63;return `<div class="gauge" role="img" aria-label="Confidence ${c} of 100"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" class="g-bg"/><circle cx="40" cy="40" r="34" class="g-fg" stroke-dasharray="${(C*c/100).toFixed(1)} ${C}"/></svg><div class="g-n"><b>${c}</b><span>of 100</span></div><div class="g-t">${tier(c)} confidence</div></div>`}
 let SEL='109308847';
@@ -620,5 +619,5 @@ function start(){MKready=loadMarks();window.addEventListener('hashchange',route)
  MKready.then(ch=>{const a=location.hash.replace(/^#\/?/,'').split('/')[0];if(ch&&['','home','certified','cert','cards'].includes(a))route()})}
 if(/access_token=|error_description=/.test(location.hash)){V.innerHTML='<p class="pg-sub">Signing you in…</p>';sbReady().then(sb=>sb.auth.getSession()).finally(()=>{history.replaceState(null,'',location.pathname+'#/'+(sessionStorage.getItem('gg_ret')||'collection'));start()})}
 else{start()}
-</script><script>(function(){var m=/^\/verify\/(?:([A-Za-z]{2,4})\/)?([0-9]{6,12})\/?$/.exec(location.pathname);if(m)location.replace('/platform#\/cert\/'+m[2])})();</script>
+</script><script>(function(){var m=/^\/verify\/(?:([A-Za-z]{2,4})\/)?([0-9]{6,12})\/?$/.exec(location.pathname);if(m)history.replaceState(null,'','/platform#/cert/'+m[2])})();</script>
 </body></html>

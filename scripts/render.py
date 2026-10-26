@@ -38,7 +38,7 @@ os.makedirs(f"{R}/public", exist_ok=True)
 json.dump(dict(updated=cc["updated"], cards={c["k"]: [c["cn"], c["cl"], c["g"], c["ga"]] for c in cards}), open(f"{R}/public/prices.json", "w"), separators=(",", ":"))  # read by price-alert function
 p = open(f"{R}/src/platform.tpl.html", encoding="utf-8").read()
 p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd).replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
-p = p.replace("__MARKPDF_JS__", open(f"{R}/src/markpdf.js", encoding="utf-8").read().replace("if(typeof module!=='undefined')module.exports={buildMarkPdf,markPdfStatus,markPdfAscii};", ""))
+p = p.replace("__MARKPDF_JS__", _re.sub(r"if\(typeof module!=='undefined'\)module\.exports=\{[^}]*\};?", "", open(f"{R}/src/markpdf.js", encoding="utf-8").read()))
 open(f"{R}/public/platform.html", "w", encoding="utf-8").write(p)
 # scanner: one row per card, gap < 300%, asks >= $20, grade 8+, 10 below then 10 above
 rows = []
