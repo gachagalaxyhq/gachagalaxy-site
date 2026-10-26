@@ -19,6 +19,7 @@ export function shareHtml(row, grader, cert) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
+<meta name="robots" content="noindex,follow">
 <link rel="canonical" href="${esc(url)}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Gacha Galaxy">
