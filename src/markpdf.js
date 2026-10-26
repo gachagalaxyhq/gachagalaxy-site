@@ -40,7 +40,7 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...dim);doc.text(money(lo),x,ty);doc.text(money(hi),x+bw,ty,{align:'right'});ty+=9;
  // facts grid
  const facts=[['Value band',`${money(lo)} - ${money(hi)}`],['Confidence',`${c.conf} / 100 (${tier(c.conf)})`],['Prices used',String(c.prices??'-')],
-  ['Published',d(st.last)],['Valid until',st.k==='revoked'?'Revoked':d(st.until)],['Network',c.network==='robinhood-testnet'?'Robinhood Chain testnet':'Robinhood Chain']];
+  ['Published',d(st.last)],['Refresh due',st.k==='revoked'?'Revoked':d(st.until)],['Network',c.network==='robinhood-testnet'?'Robinhood Chain testnet':'Robinhood Chain']];
  const cw=tw/2;facts.forEach((f,i)=>{const fx=x+(i%2)*cw,fy=ty+Math.floor(i/2)*12;doc.setFontSize(7.5);doc.setTextColor(...dim);doc.setFont('helvetica','bold');doc.text(f[0].toUpperCase(),fx,fy);
   doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...ink);doc.text(A(f[1]),fx,fy+5)});
  y=Math.max(y+ih,ty+36)+8;

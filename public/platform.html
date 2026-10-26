@@ -365,7 +365,7 @@ const VALID_DAYS=30;const fdate=t=>new Date(t).toLocaleDateString('en-GB',{day:'
 const RECHECK_DAYS=5;const delta=(a,b)=>b?((a-b)/b):null;const dflag=x=>x==null?'':Math.abs(x)>=.4?'Review':Math.abs(x)>=.2?'Watch':'none';
 function markStatus(c,now){now=now||Date.now();const E=c.ev||(D.oc.events||{})[c.cert]||[];if(!E.length)return {E,last:null,until:null,active:false,revoked:!!c.revoked,state:'none',daysLeft:null};if(c.revoked)return {E,last:E[0].t,until:null,active:false,revoked:true,state:'revoked',daysLeft:null};const last=E[0].t;const until=Date.parse(last)+VALID_DAYS*864e5;const daysLeft=Math.ceil((until-now)/864e5);return {E,last,until,active:now<until,revoked:false,state:now>=until?'expired':daysLeft<=RECHECK_DAYS?'recheck':'active',daysLeft}}
 const CRIT=[['Cert is real','The PSA cert number exists at PSA.'],['Details match','PSA’s record matches the card name, set, number and grade.'],['Worth $50 or more','The fair price is at least $50.'],['Price is trustworthy','Confidence is Medium (40) or above.']];
-function mkLine(st){if(!st.last)return '';const verb=st.state==='revoked'?'Last published':st.state==='expired'?'Expired':'Published';let t='<span class="mk-st-t">'+verb+' '+fdate(st.last);if(!st.revoked){t+=st.state==='expired'?' · expired '+fdate(st.until):' · valid until <b>'+fdate(st.until)+'</b> · '+st.daysLeft+' day'+(st.daysLeft===1?'':'s')+' left';if(st.state==='recheck')t+=' · recheck window open'}return t+'</span>'}
+function mkLine(st){if(!st.last)return '';const verb=st.state==='revoked'?'Last published':st.state==='expired'?'Expired':'Published';let t='<span class="mk-st-t">'+verb+' '+fdate(st.last);if(!st.revoked){t+=st.state==='expired'?' · expired '+fdate(st.until):' · refresh due <b>'+fdate(st.until)+'</b> · '+st.daysLeft+' day'+(st.daysLeft===1?'':'s')+' left';if(st.state==='recheck')t+=' · recheck window open'}return t+'</span>'}
 function cert(n){setTab('certified');const c=D.certs.find(x=>x.cert===n);if(!c&&!MKdone){V.innerHTML='<p class="pg-sub">Loading certificate…</p>';MKready.then(()=>{if(location.hash.replace(/^#\/?/,'')==='cert/'+n)cert(n)});return}if(!c){V.innerHTML=`<div class="panel empty">No Gacha Mark for PSA cert <b class="num">${esc(n)}</b> yet. <a href="#/certified">See the ${MKon().length} certified slabs</a>.</div>`;return}
  const st=markStatus(c);const txu=(h,e)=>`${(e&&e.explorer)||D.oc.explorer}/tx/${h}`;
  const pill={active:`<span class="pill p-grn"><i></i>Active</span>`,recheck:`<span class="pill p-amb"><i></i>Recheck due</span>`,expired:`<span class="pill p-amb"><i></i>Expired</span>`,revoked:`<span class="pill p-amb"><i></i>Revoked</span>`,none:`<span class="pill p-dim"><i></i>No onchain record found</span>`}[st.state];
@@ -436,7 +436,7 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...dim);doc.text(money(lo),x,ty);doc.text(money(hi),x+bw,ty,{align:'right'});ty+=9;
  // facts grid
  const facts=[['Value band',`${money(lo)} - ${money(hi)}`],['Confidence',`${c.conf} / 100 (${tier(c.conf)})`],['Prices used',String(c.prices??'-')],
-  ['Published',d(st.last)],['Valid until',st.k==='revoked'?'Revoked':d(st.until)],['Network',c.network==='robinhood-testnet'?'Robinhood Chain testnet':'Robinhood Chain']];
+  ['Published',d(st.last)],['Refresh due',st.k==='revoked'?'Revoked':d(st.until)],['Network',c.network==='robinhood-testnet'?'Robinhood Chain testnet':'Robinhood Chain']];
  const cw=tw/2;facts.forEach((f,i)=>{const fx=x+(i%2)*cw,fy=ty+Math.floor(i/2)*12;doc.setFontSize(7.5);doc.setTextColor(...dim);doc.setFont('helvetica','bold');doc.text(f[0].toUpperCase(),fx,fy);
   doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...ink);doc.text(A(f[1]),fx,fy+5)});
  y=Math.max(y+ih,ty+36)+8;
@@ -499,7 +499,7 @@ function buildMarksPdf(jsPDF,list,now,opt){
 async function chainCheck(c,e){const el=$('#mkcc');if(!el)return;const set=(k,h)=>{if(location.hash.replace(/^#\/?/,'')!=='cert/'+c.cert)return;el.innerHTML=`<span class="cc-i cc-${k}"></span>${h}`};
  try{const reg=e.registry||D.oc.registry,cid=e.chainId||(/testnet/i.test(D.oc.chain||'')?46630:4663);const ch=await ccRead(cid,reg,c.grader||'PSA',c.cert);if(!ch)return set('w','Chain check not available for this record.');
   const r=ccCompare({low:e.low,point:e.point,high:e.high,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
-  if(r.k==='match')set('ok',`Matches the chain. Read live from the registry just now: ${money(ch.low/100,0)} – ${money(ch.high/100,0)}, published ${at} UTC.`);
+  if(r.k==='match')set('ok',`Matches the chain. Read from the registry just now: ${money(ch.low/100,0)} – ${money(ch.high/100,0)}, published ${at} UTC.`);
   else if(r.k==='missing')set('bad','No record for this cert on the registry. Treat this Mark as unconfirmed.');
   else set('bad',`Does not match the chain: ${r.diffs.join(', ')} differ. The chain value wins; treat this page as out of date.`)}
  catch(err){set('w','Could not reach the chain just now. The record above is from our database.')}}
