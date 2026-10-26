@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.name "Gacha Galaxy"
           git config user.email "matthew@me3.io"
-          git add data/cc.json data/history.json src/onchain.json public/index.html public/platform.html public/prices.json public/cards public/assets
+          git add data/cc.json data/history.json src/onchain.json public/index.html public/platform.html public/prices.json public/sitemap.xml public/cards public/assets
           git diff --cached --quiet && echo "No changes" && exit 0
           git commit -m "Refresh Collector Crypt prices"
           git push

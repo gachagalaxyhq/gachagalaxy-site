@@ -63,6 +63,7 @@ TPL = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} | Gacha Galaxy</title>
+    <link rel="canonical" href="https://gachagalaxy.io/{slug}/">
     <link rel="stylesheet" href="/legal/main.css">
 </head>
 <body>
@@ -86,5 +87,5 @@ TPL = """<!DOCTYPE html>
 for slug, (title, intro, secs) in PAGES.items():
     body = "\n".join(f"                <section>\n                    <h2>{html.escape(h)}</h2>\n                    <p>{p}</p>\n                </section>" for h, p in secs)
     os.makedirs(f"{OUT}/{slug}", exist_ok=True)
-    open(f"{OUT}/{slug}/index.html", "w", encoding="utf-8").write(TPL.format(title=title, intro=intro, eff=EFF, sections=body, attr=ATTR))
+    open(f"{OUT}/{slug}/index.html", "w", encoding="utf-8").write(TPL.format(slug=slug, title=title, intro=intro, eff=EFF, sections=body, attr=ATTR))
     print(slug, len(secs), "sections")
