@@ -499,27 +499,39 @@ function buildMarksPdf(jsPDF,list,now,opt){
 async function chainCheck(c,e){const el=$('#mkcc');if(!el)return;const set=(k,h)=>{if(location.hash.replace(/^#\/?/,'')!=='cert/'+c.cert)return;el.innerHTML=`<span class="cc-i cc-${k}"></span>${h}`};
  try{const reg=e.registry||D.oc.registry,cid=e.chainId||(/testnet/i.test(D.oc.chain||'')?46630:4663);const ch=await ccRead(cid,reg,c.grader||'PSA',c.cert);if(!ch)return set('w','Chain check not available for this record.');
   if(c.revoked&&ch.appraisedAt)return set('bad','Revoked by Gacha Galaxy. The original record stays on the registry and cannot be removed onchain, so do not rely on it.');
-  const r=ccCompare({low:e.low,point:e.point,high:e.high,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
-  if(r.k==='match')set('ok',`Matches the chain. Read from the registry just now: ${money(ch.low/100,0)} – ${money(ch.high/100,0)}, published ${at} UTC.`);
+  const r=ccCompare({low:e.low,point:e.point,high:e.high,grade:c.grade,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
+  const shown=ch.low!==undefined?`${money(ch.low/100,0)} – ${money(ch.high/100,0)}`:`value point ${money(ch.point/100,0)}`;
+  if(r.k==='match')set('ok',`Matches the chain. Read from the registry just now: ${shown}, published ${at} UTC.`);
+  else if(r.k==='revoked')set('bad','Revoked on the registry. Do not rely on this Mark.');
   else if(r.k==='missing')set('bad','No record for this cert on the registry. Treat this Mark as unconfirmed.');
   else set('bad',`Does not match the chain: ${r.diffs.join(', ')} differ. The chain value wins; treat this page as out of date.`)}
  catch(err){set('w','Could not reach the chain just now. The record above is from our database.')}}
-/* Gacha Mark chain check: reads getAppraisalByCert(grader,certId) straight from the registry over public RPC
-   and compares it with the record the page shows. No wallet, no library. */
+/* Gacha Mark chain check: reads the Mark straight from the registry over public RPC and compares it with the
+   record the page shows. No wallet, no library.
+   Two registry types:
+   - testnet appraisal registry (46630): getAppraisalByCert(grader,cert) -> low, point, high, ... appraisedAt, attester
+   - mainnet MarkRegistry (4663, 0xc427...): getMark(grader,cert) -> fmvCents, grade, revoked, publishedAt, publisher
+     revoke() keeps the record and sets revoked=true; an unknown cert returns all zeros. */
 const CC_RPC={46630:'https://46630.rpc.thirdweb.com',4663:'https://rpc.mainnet.chain.robinhood.com'};
-const CC_SEL='0x609e275c';
+const CC_SEL='0x609e275c',CC_SEL_MARK='0xabced0a8';
+const CC_MARK_REGS=['0xc427a992f0460b86744e9a6e24cd242770d240d8'];
+function ccKind(chainId,registry){return CC_MARK_REGS.includes(String(registry||'').toLowerCase())?'mark':'appraisal'}
 function ccStr(s){const b=new TextEncoder().encode(String(s));let h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');const len=b.length.toString(16).padStart(64,'0');h=h.padEnd(Math.ceil(h.length/64)*64||0,'0');return len+h}
-function ccEncode(grader,cert){const a=ccStr(grader),b=ccStr(cert);const off1=(64).toString(16).padStart(64,'0'),off2=(64+a.length/2).toString(16).padStart(64,'0');return CC_SEL+off1+off2+a+b}
+function ccEncode(grader,cert,sel){const a=ccStr(grader),b=ccStr(cert);const off1=(64).toString(16).padStart(64,'0'),off2=(64+a.length/2).toString(16).padStart(64,'0');return (sel||CC_SEL)+off1+off2+a+b}
 function ccDecode(hex){const h=String(hex||'').replace(/^0x/,'');if(h.length<64*11)return null;const w=i=>BigInt('0x'+h.slice(i*64,i*64+64));
  return {low:Number(w(0)),point:Number(w(1)),high:Number(w(2)),ltvBps:Number(w(3)),confidenceScore:Number(w(4)),compCount:Number(w(5)),confidence:Number(w(6)),risk:Number(w(7)),eligible:w(8)!==0n,appraisedAt:Number(w(9)),attester:'0x'+h.slice(9*64+64+24,11*64)}}
-function ccCompare(rec,ch){if(!ch||!ch.appraisedAt)return {k:'missing'};const cents=v=>Math.round(Number(v)*100);
- const diffs=[];[['low','Low'],['point','Value point'],['high','High']].forEach(([f,l])=>{if(cents(rec[f])!==ch[f])diffs.push(l)});
+function ccDecodeMark(hex){const h=String(hex||'').replace(/^0x/,'');if(h.length<64*5)return null;const w=i=>BigInt('0x'+h.slice(i*64,i*64+64));
+ return {point:Number(w(0)),grade:Number(w(1)),revoked:w(2)!==0n,appraisedAt:Number(w(3)),attester:'0x'+h.slice(4*64+24,5*64)}}
+function ccCompare(rec,ch){if(!ch||!ch.appraisedAt)return {k:'missing'};if(ch.revoked)return {k:'revoked'};const cents=v=>Math.round(Number(v)*100);
+ const diffs=[];[['low','Low'],['point','Value point'],['high','High']].forEach(([f,l])=>{if(ch[f]!==undefined&&cents(rec[f])!==ch[f])diffs.push(l)});
+ if(ch.grade!==undefined&&rec.grade!=null){const g=Number(String(rec.grade).match(/\d+/)?.[0]);if(Number.isFinite(g)&&g!==ch.grade)diffs.push('Grade')}
  const pt=rec.published?Math.floor(new Date(rec.published).getTime()/1000):null;
  if(pt!==null&&Math.abs(pt-ch.appraisedAt)>1)diffs.push('Publish time');
  return diffs.length?{k:'mismatch',diffs}:{k:'match'}}
 async function ccRead(chainId,registry,grader,cert,fetchFn){const url=CC_RPC[chainId];if(!url||!/^0x[0-9a-fA-F]{40}$/.test(registry||''))return null;
- const r=await (fetchFn||fetch)(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:registry,data:ccEncode(grader,cert)},'latest']})});
- const j=await r.json();if(j.error){if(/revert/i.test(j.error.message||''))return {appraisedAt:0};throw new Error(j.error.message||'rpc')}return ccDecode(j.result)}
+ const mark=ccKind(chainId,registry)==='mark';
+ const r=await (fetchFn||fetch)(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:registry,data:ccEncode(grader,cert,mark?CC_SEL_MARK:CC_SEL)},'latest']})});
+ const j=await r.json();if(j.error){if(/revert/i.test(j.error.message||''))return {appraisedAt:0};throw new Error(j.error.message||'rpc')}return mark?ccDecodeMark(j.result):ccDecode(j.result)}
 
 
 function gauge(c){const C=213.63;return `<div class="gauge" role="img" aria-label="Confidence ${c} of 100"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" class="g-bg"/><circle cx="40" cy="40" r="34" class="g-fg" stroke-dasharray="${(C*c/100).toFixed(1)} ${C}"/></svg><div class="g-n"><b>${c}</b><span>of 100</span></div><div class="g-t">${tier(c)} confidence</div></div>`}

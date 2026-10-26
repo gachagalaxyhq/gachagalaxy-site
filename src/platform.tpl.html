@@ -398,8 +398,10 @@ __MARKPDF_JS__
 async function chainCheck(c,e){const el=$('#mkcc');if(!el)return;const set=(k,h)=>{if(location.hash.replace(/^#\/?/,'')!=='cert/'+c.cert)return;el.innerHTML=`<span class="cc-i cc-${k}"></span>${h}`};
  try{const reg=e.registry||D.oc.registry,cid=e.chainId||(/testnet/i.test(D.oc.chain||'')?46630:4663);const ch=await ccRead(cid,reg,c.grader||'PSA',c.cert);if(!ch)return set('w','Chain check not available for this record.');
   if(c.revoked&&ch.appraisedAt)return set('bad','Revoked by Gacha Galaxy. The original record stays on the registry and cannot be removed onchain, so do not rely on it.');
-  const r=ccCompare({low:e.low,point:e.point,high:e.high,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
-  if(r.k==='match')set('ok',`Matches the chain. Read from the registry just now: ${money(ch.low/100,0)} – ${money(ch.high/100,0)}, published ${at} UTC.`);
+  const r=ccCompare({low:e.low,point:e.point,high:e.high,grade:c.grade,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
+  const shown=ch.low!==undefined?`${money(ch.low/100,0)} – ${money(ch.high/100,0)}`:`value point ${money(ch.point/100,0)}`;
+  if(r.k==='match')set('ok',`Matches the chain. Read from the registry just now: ${shown}, published ${at} UTC.`);
+  else if(r.k==='revoked')set('bad','Revoked on the registry. Do not rely on this Mark.');
   else if(r.k==='missing')set('bad','No record for this cert on the registry. Treat this Mark as unconfirmed.');
   else set('bad',`Does not match the chain: ${r.diffs.join(', ')} differ. The chain value wins; treat this page as out of date.`)}
  catch(err){set('w','Could not reach the chain just now. The record above is from our database.')}}
