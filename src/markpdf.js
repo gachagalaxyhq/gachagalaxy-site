@@ -75,5 +75,28 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
   doc.setFont('helvetica','bold');doc.setFontSize(rev?96:34);doc.setTextColor(...(rev?amb:pur));doc.text(wm,W/2,rev?H/2+20:H/2+8,{align:'center',angle:35});
   doc.restoreGraphicsState&&doc.restoreGraphicsState()}
  if(test){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...amb);doc.text('Pre-production record on Robinhood Chain testnet. Not a production Gacha Mark.',M,H-15)}
+ if(opt&&opt.fingerprint){doc.setFont('helvetica','normal');doc.setFontSize(5.6);doc.setTextColor(135);doc.text('Record fingerprint '+opt.fingerprint+'  -  recompute it from the certificate page to check this copy.',M,H-4)}
  return doc}
-if(typeof module!=='undefined')module.exports={buildMarkPdf,markPdfStatus,markPdfAscii};
+if(typeof module!=='undefined')
+function buildMarksPdf(jsPDF,list,now,opt){
+ opt=opt||{};const doc=new jsPDF({unit:'mm',format:'a4'});const W=210,M=12,H=297;
+ const d=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}):'-';
+ doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(20,16,40);doc.text('Gacha Mark register',M,20);
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(110);
+ doc.text('Generated '+new Date(now).toISOString().slice(0,16).replace('T',' ')+' UTC  -  '+list.length+' certificate'+(list.length===1?'':'s')+'  -  gachagalaxy.io/platform',M,26);
+ let y=36;const X=[M,M+20,M+104,M+128,M+152,M+178];
+ doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(90);
+ ['Cert','Card','Grade','Value','Status','Published'].forEach((h,i)=>doc.text(h,X[i],y));
+ doc.setDrawColor(215);doc.line(M,y+2,W-M,y+2);y+=7;doc.setFont('helvetica','normal');doc.setFontSize(7.2);
+ list.forEach(c=>{if(y>280){doc.addPage();y=20}
+  const st=c._st||markPdfStatus(c,now,opt.validDays||30);const rev=st.k==='revoked';
+  doc.setTextColor(20,16,40);doc.text(String(c.cert),X[0],y);
+  doc.text(((c.name||'')+' '+(c.num||'')).trim().slice(0,46),X[1],y);
+  doc.text(String(c.grade||'-'),X[2],y);
+  doc.text('$'+Math.round(c.point||0).toLocaleString('en-US'),X[3],y);
+  doc.setTextColor(...(rev?[180,90,20]:st.k==='active'?[20,120,90]:[120,120,120]));doc.text(st.label,X[4],y);
+  doc.setTextColor(110);doc.text(d(st.last),X[5],y);y+=5.4});
+ doc.setFontSize(5.6);doc.setTextColor(135);
+ doc.text('Reference prices and checked grading details, not offers, and not proof of physical authenticity.',M,H-8);
+ return doc}
+module.exports={buildMarkPdf,markPdfStatus,markPdfAscii,buildMarksPdf};
