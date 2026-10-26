@@ -309,14 +309,14 @@ img.pillar__icon{width:72px;height:72px;margin:0 0 24px;object-fit:contain;filte
 <div class="stat"><div class="stat__num num" data-count="24542">24,542</div><div class="stat__label">Cards tracked</div></div><div class="stat__divider"></div>
 <div class="stat"><div class="stat__num num" data-count="1071938">1,071,938</div><div class="stat__label">History points</div></div><div class="stat__divider"></div>
 <div class="stat"><div class="stat__num num" data-count="8">8</div><div class="stat__label">Marketplaces</div></div><div class="stat__divider"></div>
-<div class="stat"><div class="stat__num num" data-count="6">6</div><div class="stat__label">Certificates onchain</div></div>
+<div class="stat"><div class="stat__num num" id="mkCount" data-count="6">6</div><div class="stat__label">Certificates onchain</div></div>
 </div>
 <div class="status"><span class="spill g"><i></i>Price Oracle · 24,542 cards tracked</span><span class="spill a"><i></i>Clean Check · Deploying with Horizen</span><span class="spill c"><i></i>Gacha Mark · Pre-production on Robinhood Chain</span></div>
 </div></section>
 
 <!-- 7 CERTIFICATES -->
 <section class="sec" id="certificates"><div class="container">
-<div class="section-header"><span class="section-label"><span class="eyebrow__dot" aria-hidden="true"></span>[ Certificates ]</span><h2 class="section-title">Six real PSA 10 slabs, <span class="accent">certified onchain.</span></h2><p class="section-sub">Each certificate is keyed by grading authority and cert number, and stored on Robinhood Chain. Open one, or verify it onchain.</p></div>
+<div class="section-header"><span class="section-label"><span class="eyebrow__dot" aria-hidden="true"></span>[ Certificates ]</span><h2 class="section-title"><span id="mkHead">Six real PSA 10 slabs</span>, <span class="accent">certified onchain.</span></h2><p class="section-sub">Each certificate is keyed by grading authority and cert number, and stored on Robinhood Chain. Open one, or verify it onchain.</p></div>
 <div class="certs"><div id="vcw"></div>
 <div class="table-wrap"><div class="table-scroll"><table class="table ct"><thead><tr><th>Card</th><th>PSA cert</th><th>Fair range</th><th class="hm" title="Confidence">Conf.</th><th>Status</th></tr></thead><tbody id="otb"></tbody></table></div></div></div>
 <p class="note">Asking prices and insured values from public marketplace listings, normalized by grade. These are not completed sales. <a href="https://explorer.testnet.chain.robinhood.com/address/0x2A585396dd0248A060045b3f557076fB1B4Cb0eb" target="_blank" rel="noopener">View on explorer →</a></p>
@@ -417,21 +417,36 @@ const CERTS=[{"cert": "109308847", "name": "Rayquaza VMAX", "num": "#218", "set"
 const $=s=>document.querySelector(s);const m=v=>'$'+Math.round(v).toLocaleString('en-US');
 const tier=s=>s>=70?'High':s>=40?'Medium':'Low';
 function gauge(c){const C=213.63;return `<div class="gauge" role="img" aria-label="Confidence ${c} of 100"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" class="g-bg"/><circle cx="40" cy="40" r="34" class="g-fg" stroke-dasharray="${(C*c/100).toFixed(1)} ${C}"/></svg><div class="g-n"><b>${c}</b><span>of 100</span></div><div class="g-t">${tier(c)} confidence</div></div>`}
-function vcard(c){return `<article class="card vc"><div class="vc-h"><span>● Gacha Mark · Certified onchain</span><span>Pre-production on Robinhood Chain</span></div><div class="vc-b"><img src="${c.img}" alt="PSA 10 ${c.name} slab, cert ${c.cert}"><div><div class="mark-row"><picture class="seal-card"><source srcset="https://gachagalaxy-site.pages.dev/assets/16f5a13eb277.svg" type="image/svg+xml"><img src="https://gachagalaxy-site.pages.dev/assets/de7dc6c988d3.png" alt="Gacha Mark seal"></picture><span class="mark-tag">Gacha Mark</span></div><h3>${c.year} ${c.name} ${c.num} · ${c.set} · PSA 10</h3><div class="st">PSA cert <span class="num">${c.cert}</span></div><div class="v num">${m(c.point)}</div><div class="fr">fair range ${m(c.low)} to ${m(c.high)} · ${c.prices} price points</div></div>${gauge(c.conf)}</div><div class="vc-f"><div><span>Prices used</span><b class="num">${c.prices}</b></div><div><span>Keyed by</span><b>PSA + cert number</b></div><div><span>Stored on</span><b>Robinhood Chain</b></div></div><div class="vc-a"><a class="btn btn--primary btn--sm" href="platform.html#/cert/${c.cert}">Open certificate</a><a class="btn btn--ghost btn--sm" href="${EXP}" target="_blank" rel="noopener">View on explorer</a></div></article>`}
+function vcard(c){return `<article class="card vc"><div class="vc-h"><span>● Gacha Mark · Certified onchain</span><span>Pre-production on Robinhood Chain</span></div><div class="vc-b"><img src="${c.img}" alt="PSA 10 ${c.name} slab, cert ${c.cert}"><div><div class="mark-row"><picture class="seal-card"><source srcset="https://gachagalaxy-site.pages.dev/assets/16f5a13eb277.svg" type="image/svg+xml"><img src="https://gachagalaxy-site.pages.dev/assets/de7dc6c988d3.png" alt="Gacha Mark seal"></picture><span class="mark-tag">Gacha Mark</span></div><h3>${H(c.year)} ${H(c.name)} ${H(c.num)} · ${H(c.set)} · ${H(c.grade||'PSA 10')}</h3><div class="st">PSA cert <span class="num">${c.cert}</span></div><div class="v num">${m(c.point)}</div><div class="fr">fair range ${m(c.low)} to ${m(c.high)} · ${c.prices} price points</div></div>${gauge(c.conf)}</div><div class="vc-f"><div><span>Prices used</span><b class="num">${c.prices}</b></div><div><span>Keyed by</span><b>PSA + cert number</b></div><div><span>Stored on</span><b>Robinhood Chain</b></div></div><div class="vc-a"><a class="btn btn--primary btn--sm" href="platform.html#/cert/${c.cert}">Open certificate</a><a class="btn btn--ghost btn--sm" href="${EXP}" target="_blank" rel="noopener">View on explorer</a></div></article>`}
 function ppBody(w){const c=CERTS[0];$('#ppb').innerHTML=w==='b'?`<div class="pp-l"><img src="${c.img}" alt=""><div><b>${c.name} ${c.num} · PSA 10</b><div class="pp-price">Listed at <b class="num">$2,900.00</b></div><span class="pp-badge">${MK}Gacha Mark ${m(c.point)} · ${c.conf}</span></div></div><p class="pp-note">Example listing, for illustration.</p>`:`<div class="pp-cols"><div><h4>Shared with partners</h4><p>Value band and point</p><p>Confidence score</p><p>Prices used</p><p>Signed, onchain</p></div><div><h4>Stays private · Horizen</h4><p>Inventory</p><p>Customers</p><p>Margins</p></div></div><p class="pp-note">The private check is deploying with Horizen.</p>`;
  document.querySelectorAll('.pp-tabs button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.p===w)))}
 ppBody('b');document.querySelectorAll('.pp-tabs button').forEach(x=>x.onclick=()=>ppBody(x.dataset.p));
-$('#otb').innerHTML=CERTS.map(x=>`<tr data-c="${x.cert}"><td><a href="platform.html#/cert/${x.cert}">${x.name} ${x.num}</a><span class="sc-set">${x.set}</span></td><td class="num nw">${x.cert}</td><td class="num nw">${m(x.low)}–${m(x.high)}</td><td class="num hm">${x.conf}</td><td><span class="pill p-grn"><i></i>Onchain</span></td></tr>`).join('');
+const H=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function otb(){$('#otb').innerHTML=CERTS.map(x=>`<tr data-c="${H(x.cert)}"><td><a href="platform.html#/cert/${H(x.cert)}">${H(x.name)} ${H(x.num)}</a><span class="sc-set">${H(x.set)}</span></td><td class="num nw">${H(x.cert)}</td><td class="num nw">${m(x.low)}–${m(x.high)}</td><td class="num hm">${H(x.conf)}</td><td>${x.revoked?'<span class="pill p-amb"><i></i>Revoked</span>':'<span class="pill p-grn"><i></i>Onchain</span>'}</td></tr>`).join('');
+ document.querySelectorAll('#otb tr').forEach(r=>r.onclick=e=>{if(e.target.closest('a'))return;$('#certIn').value=r.dataset.c;show(r.dataset.c,false)})}
+otb();
 function show(q,scroll){q=(q||'').replace(/\D/g,'');const r=$('#result');if(!q){r.innerHTML='<div class="card nores">Enter the cert number printed on the PSA label.</div>';return}
  const c=CERTS.find(x=>x.cert===q);
- if(!c){r.innerHTML=`<div class="card nores">No Gacha Mark for PSA cert <b class="num">${q}</b> yet. Gacha Mark is in pre-production: 6 slabs are certified today. Try one of the numbers above.</div>`;return}
+ if(!c){r.innerHTML=`<div class="card nores">No Gacha Mark for PSA cert <b class="num">${q}</b> yet. Gacha Mark is in pre-production: ${CERTS.filter(x=>!x.revoked).length} slabs are certified today. Try one of the numbers above.</div>`;return}
  r.innerHTML='';$('#vcw').innerHTML=vcard(c);if(scroll)$('#certificates').scrollIntoView({behavior:'smooth',block:'start'})}
 $('#vcw').innerHTML=vcard(CERTS[0]);
 $('#certForm').addEventListener('submit',e=>{e.preventDefault();show($('#certIn').value,true)});
 document.querySelectorAll('.try button').forEach(b=>b.addEventListener('click',()=>{$('#certIn').value=b.dataset.c;show(b.dataset.c,true)}));
-document.querySelectorAll('#otb tr').forEach(r=>r.onclick=e=>{if(e.target.closest('a'))return;$('#certIn').value=r.dataset.c;show(r.dataset.c,false)});
 (function(){const els=[...document.querySelectorAll('[data-count]')];const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const run=el=>{if(el.dataset.done)return;el.dataset.done=1;const t=+el.dataset.count;if(rm){el.textContent=t.toLocaleString('en-US');return}
   el.textContent='0';const d=1600,s0=performance.now();el.classList.add('is-ticking');const f=n=>{const k=Math.min(1,(n-s0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(t*e).toLocaleString('en-US');if(k<1)requestAnimationFrame(f);else el.classList.remove('is-ticking')};requestAnimationFrame(f)};
  if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){run(e.target);io.unobserve(e.target)}}),{threshold:.3});els.forEach(el=>io.observe(el))}else els.forEach(run)})();
+
+/* A5: certificate count, table and lookups read live from Supabase (public, read-only). Bundled CERTS stay as fallback. */
+const SB_URL='https://jknodjsmpjwocpljnohc.supabase.co',SB_KEY='sb_publishable_zuvJafFZrz4JStpgfljeUQ_Lj5l-05E';const NUMW=['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve'];
+(async function(){const ac=new AbortController();const to=setTimeout(()=>ac.abort(),8000);
+ try{const r=await fetch(`${SB_URL}/rest/v1/marks?select=cert,card_name,card_no,set_name,year,grade,low_usd,point_usd,high_usd,confidence,prices_used,img_url,revoked&order=created_at.asc`,{headers:{apikey:SB_KEY},signal:ac.signal});
+  if(!r.ok)return;const rows=await r.json();if(!Array.isArray(rows)||!rows.length)return;
+  const old=Object.fromEntries(CERTS.map(c=>[c.cert,c]));
+  const L=rows.map(x=>({cert:String(x.cert),name:x.card_name,num:x.card_no?'#'+x.card_no:'',set:x.set_name||'',year:x.year||'',grade:x.grade,low:+x.low_usd,point:+x.point_usd,high:+x.high_usd,conf:x.confidence,prices:x.prices_used,img:x.img_url||(old[x.cert]||{}).img||'',revoked:!!x.revoked}));
+  CERTS.splice(0,CERTS.length,...L);const on=L.filter(c=>!c.revoked);const g=on.length&&on.every(c=>c.grade==='PSA 10')?'PSA 10':'PSA';
+  const el=$('#mkCount');el.dataset.count=on.length;if(el.dataset.done||matchMedia('(prefers-reduced-motion: reduce)').matches)el.textContent=on.length.toLocaleString('en-US');
+  $('#mkHead').textContent=`${NUMW[on.length]||on.length} real ${g} slab${on.length===1?'':'s'}`;
+  otb();const cur=($('#certIn').value||'').replace(/\D/g,'');$('#vcw').innerHTML=vcard(CERTS.find(x=>x.cert===cur)||CERTS[0]);
+ }catch(e){}finally{clearTimeout(to)}})();
 </script></body></html>

@@ -62,7 +62,7 @@ def tr(g, c, l):
             f'<td class="num r nw {cls}"><b>{"+" if g > 0 else ""}{g:.1f}%</b><span class="sc-set">{lab}</span></td></tr>')
 h = open(f"{R}/src/index.tpl.html", encoding="utf-8").read()
 h = h.replace("__SCAN_ROWS__", "".join(tr(*v) for v in below + above)).replace("__UPDATED__", upd)
-h = h.replace("gg-platform-final.html", "platform.html")
+h = h.replace("gg-platform-final.html", "platform.html").replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
 open(f"{R}/public/index.html", "w", encoding="utf-8").write(h)
 for f in ["og-image-new.png"]:
     if os.path.exists(f"{R}/{f}"): shutil.copy(f"{R}/{f}", f"{R}/public/{f}")
