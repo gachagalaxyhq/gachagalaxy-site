@@ -266,6 +266,7 @@ a{color:inherit}.crumb a{color:var(--dim)}
 .ot td a{color:var(--txt);font-weight:700;text-decoration:none}.ot td.num{white-space:nowrap}
 @media (max-width:960px){.lkg{grid-template-columns:1fr}.vc-b{grid-template-columns:100px 1fr}.vc-b img{width:100px}.vc-b .gauge{grid-column:1/-1;justify-self:start}}
 @media (max-width:620px){.lkf{flex-direction:column}.lkf label{padding:14px 18px 0}.lkf input{padding:10px 18px 16px}.lkf button{padding:16px}.vc-f{grid-template-columns:1fr}.vc-f div{border-left:0;border-top:1px solid var(--line)}.ot .hm{display:none}}
+.mk-cc{display:flex;align-items:center;gap:8px;margin:8px 0 0;font-size:13px;color:var(--mut)}.cc-i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--mut)}.cc-ok{background:#1f9d6b}.cc-bad{background:#c2410c}.cc-w{background:#a3a3b2}
 .mk-st{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0}.mk-st-t{font-size:14px;color:var(--mut)}.mk-st-t b{color:var(--txt)}
 .mk-g{display:grid;grid-template-columns:1.6fr 1fr;gap:24px;align-items:start}.mk-tm{color:var(--dim);margin-left:6px}
 .mk-qr{display:flex;gap:20px;align-items:center;padding:20px}.mk-qr-i{flex:none;width:132px;height:132px;background:#fff;border-radius:12px;padding:8px}.mk-qr-i svg{width:100%;height:100%;display:block}.mk-qr b{color:var(--txt)}
@@ -370,7 +371,7 @@ function cert(n){setTab('certified');const c=D.certs.find(x=>x.cert===n);if(!c&&
  const pill={active:`<span class="pill p-grn"><i></i>Active</span>`,recheck:`<span class="pill p-amb"><i></i>Recheck due</span>`,expired:`<span class="pill p-amb"><i></i>Expired</span>`,revoked:`<span class="pill p-amb"><i></i>Revoked</span>`,none:`<span class="pill p-dim"><i></i>No onchain record found</span>`}[st.state];
  V.innerHTML=`<div class="crumb"><a href="#/certified">← Certified</a></div><article class="panel cert"><img src="${c.img}" alt="${esc(c.grade||'PSA 10')} ${esc(c.name)} slab, cert ${c.cert}"><div>
  <div class="mark-row">${SEAL('seal-card')}<span class="mark-tag mark-cert">${MKtag(c)}</span></div><h1>${esc(c.name)} ${esc(c.num)}</h1><div class="meta">${esc(c.set)} · ${c.year} · ${esc(c.grade)}${c.gradeLabel?` (${esc(c.gradeLabel)})`:''} · cert <span class="num">${c.cert}</span></div>
- <div class="mk-st">${pill}${mkLine(st)}</div>
+ <div class="mk-st">${pill}${mkLine(st)}</div>${st.E.length?`<div class="mk-cc" id="mkcc" aria-live="polite"><span class="cc-i cc-w"></span>Checking this record against the chain…</div>`:''}
  <div class="big">Value point</div><div class="pv num">${money(c.point,0)}</div>${band(c.low,c.point,c.high)}
  <div class="cf"><div><span>Value band</span><b class="num">${money(c.low,0)} – ${money(c.high,0)}</b></div><div><span>Confidence</span><b class="num">${c.conf}</b> <small>/ 100 · ${tier(c.conf)}</small></div><div><span>Prices used</span><b class="num">${c.prices}</b></div></div>
  <div class="acts"><a class="btn btn-p" href="${st.E.length?txu(st.E[0].tx,st.E[0]):mexp(c)}" target="_blank" rel="noopener">View on explorer</a><button class="btn btn-g" id="share">Copy link</button><button class="btn btn-g" id="mkpdf">Download PDF</button></div>
@@ -381,7 +382,7 @@ function cert(n){setTab('certified');const c=D.certs.find(x=>x.cert===n);if(!c&&
  <div class="sec"><h2>Share this Mark</h2><div class="panel mk-qr"><div class="mk-qr-i" role="img" aria-label="QR code for this Gacha Mark">${safeQR(c.qr)}</div><div><b>Scan to open this certificate</b><p class="prev-note">Print it next to the slab or on a listing so buyers can check the Mark.</p><code class="mk-url">gachagalaxy.io/platform#/cert/${c.cert}</code></div></div></div></div>
  <div class="sec"><h2>How a Gacha Mark is issued</h2><div class="mk-cr">${CRIT.map((x,i)=>`<div class="panel mk-ci"><span class="mth">0${i+1}</span><b>${x[0]}</b><p>${x[1]}</p></div>`).join('')}</div>
  <p class="prev-note">A Gacha Mark checks the cert, the card details and the price. It does not physically inspect the card: authenticity rests on the grading company.</p></div>`;
- $('#share').onclick=e=>{navigator.clipboard&&navigator.clipboard.writeText(location.href);e.target.textContent='Link copied'};$('#mkpdf').onclick=e=>markPdf(c,e.target);window.scrollTo(0,0)}
+ $('#share').onclick=e=>{navigator.clipboard&&navigator.clipboard.writeText(location.href);e.target.textContent='Link copied'};$('#mkpdf').onclick=e=>markPdf(c,e.target);if(st.E.length)chainCheck(c,st.E[0]);window.scrollTo(0,0)}
 /* ---------- Mark PDF certificate (client-side, from the same live record the page shows) ---------- */
 let JSPDF=null;function jspdfReady(){return JSPDF||(JSPDF=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
  s.integrity='sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/';s.crossOrigin='anonymous';s.onload=()=>ok(window.jspdf.jsPDF);s.onerror=()=>{JSPDF=null;no(new Error('load'))};document.head.appendChild(s)}))}
@@ -495,6 +496,31 @@ function buildMarksPdf(jsPDF,list,now,opt){
  return doc}
 
 
+async function chainCheck(c,e){const el=$('#mkcc');if(!el)return;const set=(k,h)=>{if(location.hash.replace(/^#\/?/,'')!=='cert/'+c.cert)return;el.innerHTML=`<span class="cc-i cc-${k}"></span>${h}`};
+ try{const reg=e.registry||D.oc.registry,cid=e.chainId||(/testnet/i.test(D.oc.chain||'')?46630:4663);const ch=await ccRead(cid,reg,c.grader||'PSA',c.cert);if(!ch)return set('w','Chain check not available for this record.');
+  const r=ccCompare({low:e.low,point:e.point,high:e.high,published:e.t},ch);const at=ch.appraisedAt?new Date(ch.appraisedAt*1000).toISOString().slice(0,16).replace('T',' '):'';
+  if(r.k==='match')set('ok',`Matches the chain. Read live from the registry just now: ${money(ch.low/100,0)} – ${money(ch.high/100,0)}, published ${at} UTC.`);
+  else if(r.k==='missing')set('bad','No record for this cert on the registry. Treat this Mark as unconfirmed.');
+  else set('bad',`Does not match the chain: ${r.diffs.join(', ')} differ. The chain value wins; treat this page as out of date.`)}
+ catch(err){set('w','Could not reach the chain just now. The record above is from our database.')}}
+/* Gacha Mark chain check: reads getAppraisalByCert(grader,certId) straight from the registry over public RPC
+   and compares it with the record the page shows. No wallet, no library. */
+const CC_RPC={46630:'https://46630.rpc.thirdweb.com',4663:'https://rpc.mainnet.chain.robinhood.com'};
+const CC_SEL='0x609e275c';
+function ccStr(s){const b=new TextEncoder().encode(String(s));let h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');const len=b.length.toString(16).padStart(64,'0');h=h.padEnd(Math.ceil(h.length/64)*64||0,'0');return len+h}
+function ccEncode(grader,cert){const a=ccStr(grader),b=ccStr(cert);const off1=(64).toString(16).padStart(64,'0'),off2=(64+a.length/2).toString(16).padStart(64,'0');return CC_SEL+off1+off2+a+b}
+function ccDecode(hex){const h=String(hex||'').replace(/^0x/,'');if(h.length<64*11)return null;const w=i=>BigInt('0x'+h.slice(i*64,i*64+64));
+ return {low:Number(w(0)),point:Number(w(1)),high:Number(w(2)),ltvBps:Number(w(3)),confidenceScore:Number(w(4)),compCount:Number(w(5)),confidence:Number(w(6)),risk:Number(w(7)),eligible:w(8)!==0n,appraisedAt:Number(w(9)),attester:'0x'+h.slice(9*64+64+24,11*64)}}
+function ccCompare(rec,ch){if(!ch||!ch.appraisedAt)return {k:'missing'};const cents=v=>Math.round(Number(v)*100);
+ const diffs=[];[['low','Low'],['point','Value point'],['high','High']].forEach(([f,l])=>{if(cents(rec[f])!==ch[f])diffs.push(l)});
+ const pt=rec.published?Math.floor(new Date(rec.published).getTime()/1000):null;
+ if(pt!==null&&Math.abs(pt-ch.appraisedAt)>1)diffs.push('Publish time');
+ return diffs.length?{k:'mismatch',diffs}:{k:'match'}}
+async function ccRead(chainId,registry,grader,cert,fetchFn){const url=CC_RPC[chainId];if(!url||!/^0x[0-9a-fA-F]{40}$/.test(registry||''))return null;
+ const r=await (fetchFn||fetch)(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:registry,data:ccEncode(grader,cert)},'latest']})});
+ const j=await r.json();if(j.error){if(/revert/i.test(j.error.message||''))return {appraisedAt:0};throw new Error(j.error.message||'rpc')}return ccDecode(j.result)}
+
+
 function gauge(c){const C=213.63;return `<div class="gauge" role="img" aria-label="Confidence ${c} of 100"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="34" class="g-bg"/><circle cx="40" cy="40" r="34" class="g-fg" stroke-dasharray="${(C*c/100).toFixed(1)} ${C}"/></svg><div class="g-n"><b>${c}</b><span>of 100</span></div><div class="g-t">${tier(c)} confidence</div></div>`}
 let SEL='109308847';
 function vcard(c){return `<article class="panel vc"><div class="vc-h"><span>● ${MKtag(c)}</span><span>Pre-production on Robinhood Chain</span></div>
@@ -606,7 +632,7 @@ const mexp=c=>{const e=(c.ev||[])[0];return e?`${e.explorer}/address/${e.registr
 const safeQR=s=>(typeof s==='string'&&/^<svg[\s>]/.test(s)&&!/<script|\son\w+=|javascript:/i.test(s))?s:'';
 const toCert=m=>({cert:m.cert,name:m.card_name,num:m.card_no?'#'+m.card_no:'',set:m.set_name||'',year:m.year||'',grader:m.grader,grade:m.grade,gradeLabel:m.grade_label||'',
  low:+m.low_usd,point:+m.point_usd,high:+m.high_usd,conf:m.confidence,prices:m.prices_used,img:m.img_url||'',qr:m.qr_svg||'',kind:m.kind,network:m.network,revoked:m.revoked,
- ev:(m.mark_events||[]).map(e=>({t:e.published_at,low:+e.low_usd,point:+e.point_usd,high:+e.high_usd,tx:e.tx,explorer:e.explorer,registry:e.registry})).sort((a,b)=>Date.parse(b.t)-Date.parse(a.t))});
+ ev:(m.mark_events||[]).map(e=>({t:e.published_at,low:+e.low_usd,point:+e.point_usd,high:+e.high_usd,tx:e.tx,explorer:e.explorer,registry:e.registry,chainId:e.chain_id})).sort((a,b)=>Date.parse(b.t)-Date.parse(a.t))});
 const sig=L=>L.map(c=>[c.cert,c.point,c.conf,c.revoked?1:0,(c.ev||(D.oc.events||{})[c.cert]||[]).length].join(':')).join('|');
 let MKdone=false,MKready=Promise.resolve();
 const MKon=()=>D.certs.filter(c=>!c.revoked);const MKg=()=>MKon().every(c=>(c.grade||'PSA 10')==='PSA 10')?'PSA 10':'PSA';const MKtag=c=>c.revoked?'Gacha Mark · Revoked':'Gacha Mark · Certified onchain';
