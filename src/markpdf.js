@@ -71,8 +71,8 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  doc.text('gachagalaxy.io',W-M,H-10,{align:'right'});
  // watermarks
  const wm=st.k==='revoked'?'REVOKED':test?'PRE-PRODUCTION':null;
- if(wm){doc.saveGraphicsState&&doc.saveGraphicsState();try{doc.setGState(new doc.GState({opacity:.09}))}catch(e){}
-  doc.setFont('helvetica','bold');doc.setFontSize(st.k==='revoked'?96:62);doc.setTextColor(...(st.k==='revoked'?amb:pur));doc.text(wm,W/2,H/2+20,{align:'center',angle:35});
+ if(wm){const rev=st.k==='revoked';doc.saveGraphicsState&&doc.saveGraphicsState();try{doc.setGState(new doc.GState({opacity:rev?.09:.045}))}catch(e){}
+  doc.setFont('helvetica','bold');doc.setFontSize(rev?96:34);doc.setTextColor(...(rev?amb:pur));doc.text(wm,W/2,rev?H/2+20:H/2+8,{align:'center',angle:35});
   doc.restoreGraphicsState&&doc.restoreGraphicsState()}
  if(test){doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...amb);doc.text('Pre-production record on Robinhood Chain testnet. Not a production Gacha Mark.',M,H-15)}
  return doc}
