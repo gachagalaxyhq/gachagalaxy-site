@@ -14,3 +14,18 @@ test('share page is noindex but keeps share tags', async () => {
   assert.match(h, /<meta name="robots" content="noindex,follow">/);
   assert.match(h, /og:image" content="https:\/\/gachagalaxy\.io\/og\/111992917\.png/);
 });
+
+test('HEAD mirrors GET status and headers with no body', async () => {
+  const mod = await import('../functions/verify/[grader]/[cert].js');
+  const real = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify([{ cert: '111992917', card_name: 'Umbreon VMAX', grade: 'PSA 10', point_usd: 275 }]), { status: 200 });
+  try {
+    const r = await mod.onRequestHead({ params: { grader: 'PSA', cert: '111992917' } });
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-type'), /text\/html/);
+    assert.equal(await r.text(), '');
+    globalThis.fetch = async () => new Response('[]', { status: 200 });
+    const m = await mod.onRequestHead({ params: { grader: 'PSA', cert: '999' } });
+    assert.equal(m.status, 302);
+  } finally { globalThis.fetch = real; }
+});

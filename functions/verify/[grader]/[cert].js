@@ -55,3 +55,8 @@ export async function onRequestGet({ params }) {
     headers: { "content-type": "text/html;charset=utf-8", "cache-control": "public, max-age=300" }
   });
 }
+
+export async function onRequestHead(ctx) {
+  const r = await onRequestGet(ctx);
+  return new Response(null, { status: r.status, headers: r.headers });
+}
