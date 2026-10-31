@@ -1,0 +1,136 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Gacha Mark works | Gacha Galaxy</title>
+<meta name="description" content="How a Gacha Mark is made: a grading check, a reference value, human review, and one onchain record per PSA cert that anyone can check.">
+<link rel="canonical" href="https://gachagalaxy.io/how-gacha-mark-works/">
+<meta property="og:title" content="How Gacha Mark works | Gacha Galaxy"><meta property="og:description" content="One onchain record per PSA cert: grade, value, publisher and status. Here is how it is made and what it does not prove.">
+<meta property="og:image" content="https://gachagalaxy.io/og-image-new.png"><meta property="og:url" content="https://gachagalaxy.io/how-gacha-mark-works/"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:site" content="@GachaGalaxyHQ">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Press+Start+2P&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--bg-card:#0E0B16;--bg-card-2:#120D1F;--purple:#A855F7;--purple-soft:#C084FC;--white:#fff;--muted:#9CA3AF;--muted-2:#6B7280;--line:#1A1626;--line-bright:#2D2640;--green:#22C55E;--red:#EF4444;--amb:#fbbf24;
+--font-display:'Geist',system-ui,-apple-system,sans-serif;--font-pixel:'Press Start 2P',monospace;--font-mono:'JetBrains Mono',ui-monospace,monospace;--container:1240px;--radius:4px}
+*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--white);font-family:var(--font-mono);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}ul{list-style:none;padding:0;margin:0}img{display:block;max-width:100%}h1,h2,h3{margin:0}
+:focus-visible{outline:2px solid var(--purple-soft);outline-offset:3px}
+.container{max-width:var(--container);margin:0 auto;padding:0 32px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-pixel);font-size:11px;letter-spacing:.06em;padding:16px 22px;border:2px solid transparent;border-radius:var(--radius);text-transform:uppercase;white-space:nowrap;line-height:1;transition:background .18s,box-shadow .18s,border-color .18s,color .18s}
+.btn--primary{background:var(--purple);color:#fff;border-color:var(--purple)}.btn--primary:hover{background:var(--purple-soft);border-color:var(--purple-soft);box-shadow:0 0 32px rgba(168,85,247,.55)}
+.btn--ghost{color:#fff;border-color:var(--line-bright)}.btn--ghost:hover{border-color:var(--purple);color:var(--purple-soft)}
+.nav{position:sticky;top:0;z-index:100;background:rgba(0,0,0,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav__inner{display:flex;align-items:center;justify-content:space-between;height:76px;gap:24px}
+.nav__brand{display:flex;align-items:center;gap:14px}.nav__logo{height:40px;width:auto}
+.nav__lockup{font-weight:700;font-size:11px;letter-spacing:.22em;color:var(--muted);border-left:1px solid var(--line-bright);padding-left:14px}
+.hero{position:relative;padding:72px 0 56px;background:radial-gradient(900px 600px at 18% 24%,rgba(168,85,247,.14),transparent 60%),var(--bg);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(168,85,247,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(168,85,247,.045) 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 85%);-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 85%);pointer-events:none}
+.label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.24em;color:var(--purple);text-transform:uppercase;margin-bottom:20px}
+.hero h1{position:relative;font-family:var(--font-display);font-size:clamp(34px,5vw,60px);font-weight:700;line-height:1.08;letter-spacing:-.03em;max-width:900px}
+.hero h1 span{color:var(--purple);text-shadow:0 0 32px rgba(168,85,247,.4)}
+.hero p{position:relative;color:var(--muted);font-size:15px;line-height:1.75;max-width:680px;margin:22px 0 0}
+.rec{position:relative;margin-top:40px;display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line-bright);border-radius:var(--radius);background:var(--bg-card);max-width:980px}
+.rec div{padding:18px 20px;border-right:1px solid var(--line)}.rec div:last-child{border-right:0}
+.rec dt{font-size:10px;letter-spacing:.2em;color:var(--muted-2);text-transform:uppercase}.rec dd{margin:6px 0 0;font-family:var(--font-display);font-size:16px;font-weight:600}
+.sec{padding:72px 0;border-top:1px solid var(--line)}
+.sec h2{font-family:var(--font-display);font-size:clamp(26px,3.2vw,40px);font-weight:700;letter-spacing:-.025em;line-height:1.15;margin-bottom:14px}
+.sec .sub{color:var(--muted);font-size:14px;line-height:1.75;max-width:640px;margin:0 0 40px}
+.steps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;counter-reset:s}
+.st{display:flex;gap:20px;padding:26px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);transition:border-color .2s}
+.st:hover{border-color:var(--line-bright)}.st:last-child{grid-column:1/-1}
+.st__n{font-family:var(--font-pixel);font-size:12px;color:var(--purple);padding-top:5px;flex:none}
+.st h3{font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:8px}.st p{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.box{padding:28px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-card)}
+.box h3{font-size:11px;letter-spacing:.22em;text-transform:uppercase;margin-bottom:18px}
+.box--y h3{color:var(--green)}.box--n h3{color:var(--amb)}
+.box li{position:relative;padding:10px 0 10px 22px;border-top:1px solid var(--line);font-size:14px;line-height:1.6;color:#e5e7eb}.box li:first-child{border-top:0}
+.box li::before{content:"";position:absolute;left:0;top:19px;width:8px;height:8px;border-radius:2px}
+.box--y li::before{background:var(--green)}.box--n li::before{background:var(--amb)}
+.note{margin-top:16px;color:var(--muted-2);font-size:13px;line-height:1.7;max-width:820px}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+.footer{background:var(--bg);padding:80px 0 36px}
+.footer__grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:80px;margin-bottom:56px;align-items:start}
+.footer__mark{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.footer__logo{height:56px;width:auto}
+.footer__tagline{font-size:13px;line-height:1.75;color:var(--muted);margin:0 0 28px;max-width:360px}
+.footer__social{display:flex;gap:10px}
+.footer__disclaimer{border-top:1px solid var(--line);padding-top:28px;margin-top:40px;font-size:11px;line-height:1.6;color:var(--muted-2);letter-spacing:.01em}
+.footer__bottom{border-top:1px solid var(--line);padding-top:20px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.16em;color:var(--muted-2);text-transform:uppercase;flex-wrap:wrap;gap:12px}
+.footer__url{color:var(--purple);text-transform:none;letter-spacing:.04em}
+.footer__grid{grid-template-columns:1fr 1fr;gap:40px}
+.footer__grid{grid-template-columns:1fr}
+@media (max-width:960px){.nav__lockup{display:none}.steps,.two{grid-template-columns:1fr}.st:last-child{grid-column:auto}.rec{grid-template-columns:repeat(2,1fr)}.rec div{border-bottom:1px solid var(--line)}.rec div:nth-child(2n){border-right:0}.rec div:last-child{grid-column:1/-1;border-bottom:0}.footer__grid{grid-template-columns:1fr;gap:40px}}
+@media (max-width:560px){.container{padding:0 20px}.hero{padding:48px 0 40px}.sec{padding:52px 0}.st{padding:20px;gap:14px}.nav__cta{padding:12px 14px;font-size:9px}.box{padding:22px}}
+</style></head><body>
+<nav class="nav"><div class="nav__inner container">
+<a href="/" class="nav__brand"><img src="https://gachagalaxy-site.pages.dev/assets/b63e48a8b14a.png" alt="Gacha Galaxy" class="nav__logo"><span class="nav__lockup">GACHA GALAXY</span></a>
+<a href="/platform" class="btn btn--primary nav__cta">Open platform →</a></div></nav>
+<main>
+<header class="hero"><div class="container">
+<span class="label">[ How Gacha Mark works ]</span>
+<h1>One record per PSA cert, <span>that anyone can check.</span></h1>
+<p>A Gacha Mark is a public record for one graded card. It is keyed by grader and cert number, so a single cert has a single record, and anyone can see who published it and whether it still stands.</p>
+<dl class="rec">
+<div><dt>Key</dt><dd>PSA · cert no.</dd></div>
+<div><dt>Grade</dt><dd>From the grading record</dd></div>
+<div><dt>Value</dt><dd>Reference value, USD</dd></div>
+<div><dt>Publisher</dt><dd>Who wrote it</dd></div>
+<div><dt>Status</dt><dd>Active or revoked</dd></div>
+</dl>
+</div></header>
+
+<section class="sec"><div class="container">
+<span class="label">[ The steps ]</span>
+<h2>From request to public record</h2>
+<p class="sub">Seven steps. Nothing is published automatically.</p>
+<ul class="steps">
+<li class="st"><span class="st__n">01</span><div><h3>Request</h3><p>Add a PSA cert to My Collection and ask for a Mark. You can follow the status and the reason for every decision, and cancel at any time.</p></div></li>
+<li class="st"><span class="st__n">02</span><div><h3>Grading check</h3><p>We read the grading record for that cert number: card, set, number and grade. If the cert can't be found, or the details don't match, the request stops here.</p></div></li>
+<li class="st"><span class="st__n">03</span><div><h3>Reference value</h3><p>We set a value from public marketplace prices for the same card at the same grade. No Mark below $50 or below medium confidence. Prices are asking prices, not completed sales.</p></div></li>
+<li class="st"><span class="st__n">04</span><div><h3>Human review</h3><p>A person checks the request before anything is published. A grading record existing is never enough on its own, and every decision is logged with a reason.</p></div></li>
+<li class="st"><span class="st__n">05</span><div><h3>Recorded onchain</h3><p>The Mark is written to a registry on Robinhood Chain, keyed by grader and cert number: value, grade, publish date and publisher.</p></div></li>
+<li class="st"><span class="st__n">06</span><div><h3>Anyone can check it</h3><p>Every Mark has a public page and a QR code. The page reads the registry directly, so you can compare what the site shows with what the chain holds.</p></div></li>
+<li class="st"><span class="st__n">07</span><div><h3>Kept current</h3><p>Each Mark lasts 30 days and is rechecked before then. If the value drops under $50 or moves sharply, it goes back for review. A revoked Mark is labelled as revoked, not removed.</p></div></li>
+</ul>
+</div></section>
+
+<section class="sec"><div class="container">
+<span class="label">[ Limits ]</span>
+<h2>What a Mark shows, and what it doesn't</h2>
+<p class="sub">A Mark is a record about a cert number. It is not an inspection of the slab in your hand.</p>
+<div class="two">
+<div class="box box--y"><h3>It shows</h3><ul>
+<li>That this cert has one public record, and who published it</li>
+<li>The grade from the grading record at the time of the check</li>
+<li>A reference value and the date it was set</li>
+<li>Whether the record is active or revoked</li>
+</ul></div>
+<div class="box box--n"><h3>It does not show</h3><ul>
+<li>That a physical slab is genuine. A copied label can carry a real cert number</li>
+<li>Who owns the card, or where it is held</li>
+<li>A guaranteed price. Values come from asking prices, not completed sales</li>
+<li>Anything about grades from other graders. Marks cover PSA only for now</li>
+</ul></div>
+</div>
+<p class="note">Check the slab itself and the grader's own cert lookup before you buy. Gacha Mark is in pre-production and may change.</p>
+</div></section>
+
+<section class="sec"><div class="container">
+<span class="label">[ Try it ]</span>
+<h2>See a Mark</h2>
+<p class="sub">Open an example certificate, or look up a cert number on the platform.</p>
+<div class="cta"><a class="btn btn--primary" href="/verify/PSA/111992917">Open an example →</a><a class="btn btn--ghost" href="/platform">Look up a cert</a></div>
+</div></section>
+</main>
+<footer class="footer"><div class="container">
+<div class="footer__grid">
+<div><a href="/" class="footer__mark"><img src="https://gachagalaxy-site.pages.dev/assets/b63e48a8b14a.png" alt="Gacha Galaxy" class="footer__logo"></a>
+<p class="footer__tagline">The certified value layer for graded collectibles.</p>
+<div class="footer__social"><a href="https://x.com/GachaGalaxyHQ" aria-label="X"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzIxMjQyQyIvPgo8bWFzayBpZD0ibWFzazBfNDc3XzcxMDgiIHN0eWxlPSJtYXNrLXR5cGU6bHVtaW5hbmNlIiBtYXNrVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4PSIxMSIgeT0iMTEiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCI+CjxwYXRoIGQ9Ik0xMSAxMUgyOVYyOUgxMVYxMVoiIGZpbGw9IndoaXRlIi8+CjwvbWFzaz4KPGcgbWFzaz0idXJsKCNtYXNrMF80NzdfNzEwOCkiPgo8cGF0aCBkPSJNMjUuMTc1IDExLjg0MzNIMjcuOTM1NEwyMS45MDU0IDE4Ljc1MjdMMjkgMjguMTU2NEgyMy40NDU3TDE5LjA5MjMgMjIuNDU0M0wxNC4xMTY2IDI4LjE1NjRIMTEuMzUzNkwxNy44MDI3IDIwLjc2MzVMMTEgMTEuODQ0NUgxNi42OTU3TDIwLjYyNDkgMTcuMDU1NUwyNS4xNzUgMTEuODQzM1pNMjQuMjA0MyAyNi41MDA0SDI1LjczNDNMMTUuODYgMTMuNDEzMUgxNC4yMTk0TDI0LjIwNDMgMjYuNTAwNFoiIGZpbGw9IiM5ODlFQTkiLz4KPC9nPgo8L3N2Zz4K" alt="X"></a><a href="http://ggofficial.org/" aria-label="Discord"><img src="https://gachagalaxy-site.pages.dev/assets/f1d54263178c.svg" alt="Discord"></a><a href="https://t.me/GachaGalaxyOfficial" aria-label="Telegram"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzIxMjQyQyIvPgo8cGF0aCBkPSJNMjAgMTFDMTUuMDMyIDExIDExIDE1LjAzMiAxMSAyMEMxMSAyNC45NjggMTUuMDMyIDI5IDIwIDI5QzI0Ljk2OCAyOSAyOSAyNC45NjggMjkgMjBDMjkgMTUuMDMyIDI0Ljk2OCAxMSAyMCAxMVpNMjQuMTc2IDE3LjEyQzI0LjA0MSAxOC41NDIgMjMuNDU2IDIxLjk5OCAyMy4xNTkgMjMuNTkxQzIzLjAzMyAyNC4yNjYgMjIuNzgxIDI0LjQ5MSAyMi41NDcgMjQuNTE4QzIyLjAyNSAyNC41NjMgMjEuNjI5IDI0LjE3NiAyMS4xMjUgMjMuODQzQzIwLjMzMyAyMy4zMjEgMTkuODgzIDIyLjk5NyAxOS4xMTggMjIuNDkzQzE4LjIyNyAyMS45MDggMTguODAzIDIxLjU4NCAxOS4zMTYgMjEuMDYyQzE5LjQ1MSAyMC45MjcgMjEuNzU1IDE4LjgzIDIxLjggMTguNjQxQzIxLjgwNjMgMTguNjEyNCAyMS44MDU0IDE4LjU4MjcgMjEuNzk3NiAxOC41NTQ0QzIxLjc4OTcgMTguNTI2MiAyMS43NzUxIDE4LjUwMDMgMjEuNzU1IDE4LjQ3OUMyMS43MDEgMTguNDM0IDIxLjYyOSAxOC40NTIgMjEuNTY2IDE4LjQ2MUMyMS40ODUgMTguNDc5IDIwLjIyNSAxOS4zMTYgMTcuNzY4IDIwLjk3MkMxNy40MDggMjEuMjE1IDE3LjA4NCAyMS4zNDEgMTYuNzk2IDIxLjMzMkMxNi40NzIgMjEuMzIzIDE1Ljg2IDIxLjE1MiAxNS40MDEgMjAuOTk5QzE0LjgzNCAyMC44MTkgMTQuMzkzIDIwLjcyIDE0LjQyOSAyMC40MDVDMTQuNDQ3IDIwLjI0MyAxNC42NzIgMjAuMDgxIDE1LjA5NSAxOS45MUMxNy43MjMgMTguNzY3IDE5LjQ2OSAxOC4wMTEgMjAuMzQyIDE3LjY1MUMyMi44NDQgMTYuNjA3IDIzLjM1NyAxNi40MjcgMjMuNjk5IDE2LjQyN0MyMy43NzEgMTYuNDI3IDIzLjk0MiAxNi40NDUgMjQuMDUgMTYuNTM1QzI0LjE0IDE2LjYwNyAyNC4xNjcgMTYuNzA2IDI0LjE3NiAxNi43NzhDMjQuMTY3IDE2LjgzMiAyNC4xODUgMTYuOTk0IDI0LjE3NiAxNy4xMloiIGZpbGw9IiM5ODlFQTkiLz4KPC9zdmc+Cg==" alt="Telegram"></a><a href="https://github.com/gachagalaxyhq" aria-label="GitHub"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHJ4PSI4IiBmaWxsPSIjMjEyNDJDIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTEgMTEpIHNjYWxlKC43NSkiPjxwYXRoIGZpbGw9IiM5ODlFQTkiIGQ9Ik0xMiAuMjk3Yy02LjYzIDAtMTIgNS4zNzMtMTIgMTIgMCA1LjMwMyAzLjQzOCA5LjggOC4yMDUgMTEuMzg1LjYuMTEzLjgyLS4yNTguODItLjU3NyAwLS4yODUtLjAxLTEuMDQtLjAxNS0yLjA0LTMuMzM4LjcyNC00LjA0Mi0xLjYxLTQuMDQyLTEuNjFDNC40MjIgMTguMDcgMy42MzMgMTcuNyAzLjYzMyAxNy43Yy0xLjA4Ny0uNzQ0LjA4NC0uNzI5LjA4NC0uNzI5IDEuMjA1LjA4NCAxLjgzOCAxLjIzNiAxLjgzOCAxLjIzNiAxLjA3IDEuODM1IDIuODA5IDEuMzA1IDMuNDk1Ljk5OC4xMDgtLjc3Ni40MTctMS4zMDUuNzYtMS42MDUtMi42NjUtLjMtNS40NjYtMS4zMzItNS40NjYtNS45MyAwLTEuMzEuNDY1LTIuMzggMS4yMzUtMy4yMi0uMTM1LS4zMDMtLjU0LTEuNTIzLjEwNS0zLjE3NiAwIDAgMS4wMDUtLjMyMiAzLjMgMS4yMy45Ni0uMjY3IDEuOTgtLjM5OSAzLS40MDUgMS4wMi4wMDYgMi4wNC4xMzggMyAuNDA1IDIuMjgtMS41NTIgMy4yODUtMS4yMyAzLjI4NS0xLjIzLjY0NSAxLjY1My4yNCAyLjg3My4xMiAzLjE3Ni43NjUuODQgMS4yMyAxLjkxIDEuMjMgMy4yMiAwIDQuNjEtMi44MDUgNS42MjUtNS40NzUgNS45Mi40Mi4zNi44MSAxLjA5Ni44MSAyLjIyIDAgMS42MDYtLjAxNSAyLjg5Ni0uMDE1IDMuMjg2IDAgLjMxNS4yMS42OS44MjUuNTdDMjAuNTY1IDIyLjA5MiAyNCAxNy41OTIgMjQgMTIuMjk3YzAtNi42MjctNS4zNzMtMTItMTItMTIiLz48L2c+PC9zdmc+" alt="GitHub"></a></div></div>
+<div class="footer__col"><h4>Platform</h4><ul><li><a href="platform.html#/certified">Certified slabs</a></li><li><a href="#scanner">Mispricing Scanner</a></li><li><a href="platform.html">Platform</a></li></ul></div>
+<div class="footer__col"><h4>Legal</h4><ul><li><a href="/terms/">Terms of Use</a></li><li><a href="/privacy/">Privacy Policy</a></li><li><a href="/risk-disclosure/">Risk Disclosure</a></li></ul></div>
+</div>
+<div class="footer__disclaimer">Gacha Galaxy Labs Inc. provides data infrastructure for collectible card markets. Gacha Galaxy is a non-custodial protocol; users interact directly with on-chain smart contracts. $GG is a utility token used for protocol participation, not an investment instrument. Not available in jurisdictions subject to OFAC sanctions, including but not limited to Iran, North Korea, Cuba, Syria, the Crimea region of Russia, Belarus, Myanmar, and Venezuela (see <a href="/risk-disclosure/">Risk Disclosure</a>). Additional jurisdictions may be restricted based on local law. Nothing on this site constitutes investment, financial, or legal advice. Past data does not predict future market behavior.</div>
+<div class="footer__bottom"><span>© 2026 GACHA GALAXY LABS INC. · ALL RIGHTS RESERVED</span><!--email_off--><a href="mailto:support@gachagalaxy.io" class="footer__url">support@gachagalaxy.io</a><!--/email_off--></div>
+</div></footer>
+</body></html>
