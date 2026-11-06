@@ -7,6 +7,11 @@ const PREFIXES = ['/data/cc/', '/data/own-claims.json'];
 export default {
   async fetch(req) {
     const u = new URL(req.url);
+    if (u.pathname.startsWith('/api/')) {
+      const init = { method: req.method, headers: req.headers };
+      if (req.method !== 'GET' && req.method !== 'HEAD') init.body = req.body;
+      return fetch(ORIGIN + u.pathname + u.search, init);
+    }
     if (PAGES.has(u.pathname)) {
       const tgt = PAGES.get(u.pathname);
       if (!u.pathname.endsWith('/') && tgt.endsWith('/')) return Response.redirect(u.origin + tgt + u.search, 301);
