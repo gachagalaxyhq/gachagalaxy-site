@@ -37,6 +37,27 @@ button:disabled{opacity:.55;cursor:default}
 .cta{margin:0 0 48px;padding:20px;border:1px solid var(--line);border-radius:14px;background:#fff;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .cta p{margin:0;color:var(--mut);font-size:14.5px;flex:1;min-width:240px}
 .cta a{display:inline-block;padding:11px 16px;border-radius:10px;background:var(--ink);color:#fff;text-decoration:none;font-size:14.5px;font-weight:600;white-space:nowrap}
+.req{margin:0 0 44px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:22px}
+.req-h{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
+.req-h h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+.req-h h2 .per{font-weight:500;color:var(--mut);font-size:15px;margin-left:8px;letter-spacing:0}
+.req-h p{margin:0;color:var(--mut);font-size:14.5px;max-width:52ch}
+.req-p{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;text-align:right}
+.req-p small{display:block;font-size:12px;font-weight:500;color:var(--mut);letter-spacing:0;margin-top:6px}
+.req-f{display:flex;gap:10px;flex-wrap:wrap}
+.req-f input,.req-f select{padding:13px 14px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;outline:none}
+.req-f input#rcert{flex:2 1 200px;min-width:0;font-variant-numeric:tabular-nums}
+.req-f input#remail{flex:2 1 200px;min-width:0}
+.req-f select,.req-f button{flex:0 0 auto}
+.req-f input:focus,.req-f select:focus{border-color:var(--brand);box-shadow:0 0 0 4px #7a22c91a}
+.req-n{margin:12px 0 0;font-size:13px;color:var(--mut)}
+.req-n.ok{color:var(--ok);font-weight:600}
+.req-n.err{color:#b42318}
+.data-strip{display:flex;gap:28px;flex-wrap:wrap;margin:0 0 40px;padding:16px 20px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.data-strip div{flex:1 1 130px}
+.data-strip b{display:block;font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.data-strip span{color:var(--mut);font-size:12.5px}
+@media(max-width:520px){.req-f{flex-direction:column}.req-f input,.req-f select,.req-f button{width:100%;flex:1 1 auto}.req-p{text-align:left}}
 footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--mut);font-size:13px}
 footer p{margin:0 0 6px;max-width:70ch}
 footer p.next{margin:16px 0 0}
@@ -56,7 +77,17 @@ footer p.cp{margin:16px 0 0;color:#8f8a99;font-size:12.5px}
 <p id="msg" role="status" aria-live="polite"></p>
 <div class="results" id="out"></div>
 
-<div class="cta"><p><b>Want a permanent record?</b> We put the grading authority's own record and the sold-price range onchain, so the proof travels with the card — with a link anyone can check.</p><a href="/platform#/certified">Request a Gacha Mark</a></div>
+<div class="data-strip"><div><b>8,700</b><span>partner listings indexed for cert lookup</span></div><div><b>250</b><span>cards with sold-price data</span></div><div><b>6</b><span>Gacha Marks published onchain</span></div><div><b>$29</b><span>per mark</span></div></div>
+<section class="req" id="request">
+<div class="req-h"><div><h2>A Gacha Mark is $29<span class="per">per slab</span></h2><p>We check the cert against the grading authority's record, put that record and the sold-price range onchain, and give you a page and a PDF anyone can verify. Paid once, no subscription.</p></div><div class="req-p">$29<small>one slab, one mark</small></div></div>
+<form class="req-f" id="rq" autocomplete="on">
+<input id="rcert" inputmode="numeric" placeholder="PSA cert number, e.g. 109308847" aria-label="Cert number">
+<select id="rgr" aria-label="Grader"><option value="PSA">PSA</option><option value="CGC">CGC</option></select>
+<input id="remail" type="email" placeholder="Your email" aria-label="Your email">
+<button type="submit" id="rgo">Request a mark</button>
+</form>
+<p class="req-n" id="rn">We confirm the cert first, then send a payment link. If it does not check out, you are not charged.</p>
+</section>
 </div>
 
 <footer><div class="wrap"><p>Prices are eBay sold comps, median-weighted over the last seven days, supplied by PokemonPriceTracker. A price is a record of past sales, not a forecast, an offer, or advice.</p><p class="next"><a href="/cleancheck">Clean Check a marketplace listing <span aria-hidden="true">→</span></a></p><p class="cp">© 2026 Gacha Galaxy Labs Inc.</p></div></footer>
