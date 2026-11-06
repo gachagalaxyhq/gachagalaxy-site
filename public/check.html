@@ -120,4 +120,29 @@ async function run(q){
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('#f').addEventListener('submit',e=>{e.preventDefault();const q=$('#q').value.trim();if(q.length>=3)run(q)});
 const p=new URLSearchParams(location.search).get('q');if(p){$('#q').value=p;run(p)}
-</script></body></html>
+</script><script>
+(function(){
+  var rqEl=document.getElementById('rq'); if(!rqEl) return;
+  function nz(v){var d=String(v==null?'':v).replace(/\D/g,'');return d.replace(/^0+(?=\d)/,'')}
+  rqEl.addEventListener('submit',function(e){
+    e.preventDefault();
+    var rnEl=document.getElementById('rn'), go2=document.getElementById('rgo');
+    var cert=nz(document.getElementById('rcert').value);
+    var email=document.getElementById('remail').value.trim();
+    var gr=document.getElementById('rgr').value;
+    rnEl.className='req-n';
+    if(!cert||cert.length<5){rnEl.className='req-n err';rnEl.textContent='Enter the cert number from the slab label.';return}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)){rnEl.className='req-n err';rnEl.textContent='Enter an email so we can send the payment link.';return}
+    go2.disabled=true;go2.textContent='Sending\u2026';
+    fetch('/api/mark-request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cert:cert,grader:gr,email:email})})
+      .then(function(r){return r.json()})
+      .then(function(d){
+        if(d&&d.ok){rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. We check it, then email '+email+' a payment link.';rqEl.reset()}
+        else{rnEl.className='req-n err';rnEl.textContent=(d&&d.error)||'Could not send that. Try again.'}
+      })
+      .catch(function(){rnEl.className='req-n err';rnEl.textContent='Could not reach the server. Try again.'})
+      .then(function(){go2.disabled=false;go2.textContent='Request a mark'});
+  });
+})();
+</script>
+</body></html>
