@@ -5,7 +5,7 @@
 <style>
 :root{--ink:#121016;--mut:#6b6675;--line:#e6e2ec;--brand:#7a22c9;--brand2:#5b17a0;--ok:#0f8a5f;--bg:#fbfafc;--card:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{-webkit-text-size-adjust:100%;margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--brand)}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 header{display:flex;align-items:center;gap:12px;padding:18px 0}
@@ -40,6 +40,7 @@ button:disabled{opacity:.55;cursor:default}
 .freebar{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#f3ecfd;color:#3d1a63;font-size:14px;border:1px solid #e0d2f7}
 .freebar b{font-weight:700}
 .freebar.gone{display:none}
+.paybtn{display:inline-block;margin-top:10px;padding:10px 16px;border-radius:10px;background:var(--brand);color:#fff;text-decoration:none;font-weight:650}
 .req{margin:0 0 44px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:22px}
 .req-h{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
 .req-h h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
@@ -68,6 +69,30 @@ footer p.next a{color:var(--brand);font-weight:600;text-decoration:none;border-b
 footer p.next a:hover{border-bottom-color:var(--brand)}
 footer p.cp{margin:16px 0 0;color:#8f8a99;font-size:12.5px}
 @media(max-width:520px){form{flex-direction:column}button{width:100%}.results{grid-template-columns:1fr}}
+@media(max-width:520px){
+.wrap{padding:0 16px}
+header{padding:14px 0;gap:10px}
+header nav{gap:12px;font-size:13px;flex-wrap:wrap;justify-content:flex-end}
+h1{margin:18px 0 10px;font-size:29px}
+.lede{font-size:16px;margin-bottom:22px}
+.hint{font-size:13px}
+.results{gap:10px;margin:18px 0 32px}
+.card{padding:14px}
+.pt b{font-size:25px}
+.cta{padding:16px;gap:12px;margin-bottom:36px}
+.cta a{white-space:normal;text-align:center;width:100%}
+.freebar{font-size:13.5px;padding:11px 12px}
+.req{padding:18px 16px;border-radius:14px}
+.req-h{gap:14px;margin-bottom:14px}
+.req-h h2{font-size:20px}
+.req-h p{font-size:14px}
+.req-p{font-size:30px;margin-top:2px}
+.req-f input,.req-f select,.req-f button{font-size:16px}
+.data-strip{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;padding:16px}
+.data-strip div{flex:none}
+.paybtn{display:block;width:100%;text-align:center;margin-top:8px}
+footer{padding:18px 0 32px}
+}
 </style></head><body>
 <div class="wrap">
 <header><a class="logo" href="/">G</a><nav><a href="/platform">Platform</a><a href="/platform#/certified">Certified</a><a href="/check" style="color:var(--brand);font-weight:600">Check a card</a></nav></header>
@@ -153,6 +178,7 @@ const p=new URLSearchParams(location.search).get('q');if(p){$('#q').value=p;run(
           else{rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. We check it, then email '+email+' a payment link.'}
           rqEl.reset();
           if(typeof paint==='function')paint({ok:true,freeLeft:d.remaining,freeLimit:10});
+          if(d.payUrl){var ax=document.createElement('a');ax.className='paybtn';ax.href=d.payUrl;ax.textContent='Pay $9 now';rnEl.appendChild(document.createElement('br'));rnEl.appendChild(ax);}
         }
         else{rnEl.className='req-n err';rnEl.textContent=(d&&d.error)||'Could not send that. Try again.'}
       })

@@ -3,6 +3,8 @@
 const SB = 'https://jknodjsmpjwocpljnohc.supabase.co';
 const FREE_LIMIT = 10;
 
+const payUrl = (env) => (env && env.PAY_LINK ? String(env.PAY_LINK) : null);
+
 const json = (body, status) => new Response(JSON.stringify(body), {
   status: status || 200,
   headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
@@ -45,7 +47,7 @@ export async function onRequestPost({ request, env }) {
 
   if (r.ok) {
     const d = await r.json().catch(() => ({}));
-    return json({ ok: true, cert: cert, grader: grader, free: !!d.free, remaining: d.remaining, existing: !!d.existing });
+    return json({ ok: true, cert: cert, grader: grader, free: !!d.free, remaining: d.remaining, existing: !!d.existing, payUrl: d.free ? null : payUrl(env) });
   }
   const detail = (await r.text()).slice(0, 160);
   return json({ ok: false, error: 'Could not save the request.', detail: detail }, 502);
@@ -54,5 +56,5 @@ export async function onRequestPost({ request, env }) {
 export async function onRequestGet({ env }) {
   const left = await remaining(env);
   if (left === null) return json({ ok: false, freeLeft: null, freeLimit: FREE_LIMIT }, 503);
-  return json({ ok: true, freeLeft: left, freeLimit: FREE_LIMIT });
+  return json({ ok: true, freeLeft: left, freeLimit: FREE_LIMIT, payUrl: payUrl(env) });
 }
