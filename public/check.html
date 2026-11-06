@@ -37,6 +37,9 @@ button:disabled{opacity:.55;cursor:default}
 .cta{margin:0 0 48px;padding:20px;border:1px solid var(--line);border-radius:14px;background:#fff;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .cta p{margin:0;color:var(--mut);font-size:14.5px;flex:1;min-width:240px}
 .cta a{display:inline-block;padding:11px 16px;border-radius:10px;background:var(--ink);color:#fff;text-decoration:none;font-size:14.5px;font-weight:600;white-space:nowrap}
+.freebar{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#f3ecfd;color:#3d1a63;font-size:14px;border:1px solid #e0d2f7}
+.freebar b{font-weight:700}
+.freebar.gone{display:none}
 .req{margin:0 0 44px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:22px}
 .req-h{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
 .req-h h2{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
@@ -77,9 +80,10 @@ footer p.cp{margin:16px 0 0;color:#8f8a99;font-size:12.5px}
 <p id="msg" role="status" aria-live="polite"></p>
 <div class="results" id="out"></div>
 
-<div class="data-strip"><div><b>8,700</b><span>partner listings indexed for cert lookup</span></div><div><b>250</b><span>cards with sold-price data</span></div><div><b>6</b><span>Gacha Marks published onchain</span></div><div><b>$29</b><span>per mark</span></div></div>
+<div class="data-strip"><div><b>8,700</b><span>partner listings indexed for cert lookup</span></div><div><b>250</b><span>cards with sold-price data</span></div><div><b>6</b><span>Gacha Marks published onchain</span></div><div><b>$9</b><span>per mark · first 10 free</span></div></div>
 <section class="req" id="request">
-<div class="req-h"><div><h2>A Gacha Mark is $29<span class="per">per slab</span></h2><p>We check the cert against the grading authority's record, put that record and the sold-price range onchain, and give you a page and a PDF anyone can verify. Paid once, no subscription.</p></div><div class="req-p">$29<small>one slab, one mark</small></div></div>
+<p class="freebar" id="freebar"><b>First 10 marks are free.</b> <span id="freeleft">Checking how many are left…</span></p>
+<div class="req-h"><div><h2>A Gacha Mark is $9<span class="per">per slab</span></h2><p>We check the cert against the grading authority's record, put that record and the sold-price range onchain, and give you a page and a PDF anyone can verify. Paid once, no subscription. Ten for $49, dealers $199 a year.</p></div><div class="req-p">$9<small>one slab, one mark</small></div></div>
 <form class="req-f" id="rq" autocomplete="on">
 <input id="rcert" inputmode="numeric" placeholder="PSA cert number, e.g. 109308847" aria-label="Cert number">
 <select id="rgr" aria-label="Grader"><option value="PSA">PSA</option><option value="CGC">CGC</option></select>
@@ -123,6 +127,13 @@ const p=new URLSearchParams(location.search).get('q');if(p){$('#q').value=p;run(
 </script><script>
 (function(){
   var rqEl=document.getElementById('rq'); if(!rqEl) return;
+  var fb=document.getElementById('freebar'), fl=document.getElementById('freeleft');
+  function paint(d){
+    if(!d||!d.ok||d.freeLeft==null){if(fl)fl.textContent='Request a mark and we will confirm the price with you.';return}
+    if(d.freeLeft<=0){if(fb)fb.className='freebar gone';return}
+    if(fl)fl.textContent=d.freeLeft+' of '+d.freeLimit+' left \u2014 no payment needed for those.';
+  }
+  fetch('/api/mark-request').then(function(r){return r.json()}).then(paint).catch(function(){});
   function nz(v){var d=String(v==null?'':v).replace(/\D/g,'');return d.replace(/^0+(?=\d)/,'')}
   rqEl.addEventListener('submit',function(e){
     e.preventDefault();
@@ -137,7 +148,12 @@ const p=new URLSearchParams(location.search).get('q');if(p){$('#q').value=p;run(
     fetch('/api/mark-request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cert:cert,grader:gr,email:email})})
       .then(function(r){return r.json()})
       .then(function(d){
-        if(d&&d.ok){rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. We check it, then email '+email+' a payment link.';rqEl.reset()}
+        if(d&&d.ok){
+          if(d.free){rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. This one is free \u2014 we check it and email '+email+'.'}
+          else{rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. We check it, then email '+email+' a payment link.'}
+          rqEl.reset();
+          if(typeof paint==='function')paint({ok:true,freeLeft:d.remaining,freeLimit:10});
+        }
         else{rnEl.className='req-n err';rnEl.textContent=(d&&d.error)||'Could not send that. Try again.'}
       })
       .catch(function(){rnEl.className='req-n err';rnEl.textContent='Could not reach the server. Try again.'})
