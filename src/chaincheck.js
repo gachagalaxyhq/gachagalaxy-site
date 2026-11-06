@@ -4,7 +4,7 @@
    - testnet appraisal registry (46630): getAppraisalByCert(grader,cert) -> low, point, high, ... appraisedAt, attester
    - mainnet MarkRegistry (4663, 0xc427...): getMark(grader,cert) -> fmvCents, grade, revoked, publishedAt, publisher
      revoke() keeps the record and sets revoked=true; an unknown cert returns all zeros. */
-const CC_RPC={46630:'https://46630.rpc.thirdweb.com',4663:'https://rpc.mainnet.chain.robinhood.com'};
+const CC_RPC={46630:'https://rpc.testnet.chain.robinhood.com',4663:'https://rpc.mainnet.chain.robinhood.com'};
 const CC_SEL='0x609e275c',CC_SEL_MARK='0xabced0a8';
 const CC_MARK_REGS=['0xc427a992f0460b86744e9a6e24cd242770d240d8'];
 function ccKind(chainId,registry){return CC_MARK_REGS.includes(String(registry||'').toLowerCase())?'mark':'appraisal'}
