@@ -2,7 +2,7 @@
 const ORIGIN = 'https://gachagalaxy-site.pages.dev';
 const PATHS = new Set(['/prices.json', '/robots.txt', '/sitemap.xml', '/favicon.ico', '/apple-touch-icon.png']);
 // Exact HTML pages that live only on Pages (Dan's server does not forward them)
-const PAGES = new Map([['/how-gacha-mark-works', '/how-gacha-mark-works/'], ['/how-gacha-mark-works/', '/how-gacha-mark-works/'], ['/cleancheck', '/cleancheck.html'], ['/check', '/check.html'], ['/check/', '/check.html']]);
+const PAGES = new Map([['/how-gacha-mark-works', '/how-gacha-mark-works/'], ['/how-gacha-mark-works/', '/how-gacha-mark-works/'], ['/cleancheck', '/cleancheck.html'], ['/check', '/check.html'], ['/check/', '/check.html'], ['/certificate', '/certificate.html'], ['/certificate/', '/certificate.html']]);
 const PREFIXES = ['/data/cc/', '/data/own-claims.json'];
 export default {
   async fetch(req) {
