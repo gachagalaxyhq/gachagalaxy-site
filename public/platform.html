@@ -643,7 +643,7 @@ $('#qf').addEventListener('submit',e=>{e.preventDefault();list()});
 /* ---------- A5: Gacha Marks read live from Supabase (public, read-only). Bundled copy is the fallback. ---------- */
 const mexp=c=>{const e=(c.ev||[])[0];return e?`${e.explorer}/address/${e.registry}`:D.exp};
 const safeQR=s=>(typeof s==='string'&&/^<svg[\s>]/.test(s)&&!/<script|\son\w+=|javascript:/i.test(s))?s:'';
-const toCert=m=>({cert:m.cert,name:m.card_name,num:m.card_no?'#'+m.card_no:'',set:m.set_name||'',year:m.year||'',grader:m.grader,grade:m.grade,gradeLabel:m.grade_label||'',
+const toCert=m=>({cert:m.cert,name:m.card_name,num:m.card_no?'#'+m.card_no:'',set:m.set_name||'',year:m.year||'',grader:m.grader,grade:m.grade,gradeLabel:m.grade_label||'',price_basis:m.price_basis||'',
  low:+m.low_usd,point:+m.point_usd,high:+m.high_usd,conf:m.confidence,prices:m.prices_used,img:m.img_url||'',qr:m.qr_svg||'',kind:m.kind,network:m.network,revoked:m.revoked,
  ev:(m.mark_events||[]).map(e=>({t:e.published_at,low:+e.low_usd,point:+e.point_usd,high:+e.high_usd,tx:e.tx,explorer:e.explorer,registry:e.registry,chainId:e.chain_id})).sort((a,b)=>Date.parse(b.t)-Date.parse(a.t))});
 const sig=L=>L.map(c=>[c.cert,c.point,c.conf,c.revoked?1:0,(c.ev||(D.oc.events||{})[c.cert]||[]).length].join(':')).join('|');
