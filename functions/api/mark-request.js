@@ -47,7 +47,16 @@ export async function onRequestPost({ request, env }) {
 
   if (r.ok) {
     const d = await r.json().catch(() => ({}));
-    return json({ ok: true, cert: cert, grader: grader, free: !!d.free, remaining: d.remaining, existing: !!d.existing, payUrl: d.free ? null : payUrl(env) });
+    let id = null;
+    try {
+      const q = await fetch(SB + '/rest/v1/mark_requests?select=id&psa_cert=eq.' + encodeURIComponent(cert) + '&order=id.desc&limit=1', {
+        headers: { apikey: key, Authorization: 'Bearer ' + key }
+      });
+      if (q.ok) { const rows = await q.json(); id = (rows && rows[0] && rows[0].id) || null; }
+    } catch (e) {}
+    const base = payUrl(env);
+    const link = base && id ? base + (base.indexOf('?') > -1 ? '&' : '?') + 'client_reference_id=' + id : null;
+    return json({ ok: true, id: id, cert: cert, grader: grader, free: !!d.free, remaining: d.remaining, existing: !!d.existing, payUrl: d.free ? null : link });
   }
   const detail = (await r.text()).slice(0, 160);
   return json({ ok: false, error: 'Could not save the request.', detail: detail }, 502);
