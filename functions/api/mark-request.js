@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
   const grader = String(body.grader || 'PSA').toUpperCase() === 'CGC' ? 'CGC' : 'PSA';
   const email = String(body.email || '').trim().toLowerCase();
 
-  if (cert.length < 5 || cert.length > 12) return json({ ok: false, error: 'That cert number does not look right.' }, 400);
+  if (cert.length < 6 || cert.length > 10) return json({ ok: false, error: 'That cert number does not look right.' }, 400);
   if (!isEmail(email)) return json({ ok: false, error: 'That email does not look right.' }, 400);
 
   const key = env.SUPABASE_SERVICE_KEY;
@@ -31,7 +31,7 @@ export async function onRequestPost({ request, env }) {
 
   const row = {
     psa_cert: cert,
-    status: 'pending',
+    status: 'requested',
     reason: 'web request \u00b7 ' + grader + ' \u00b7 ' + email
   };
 
