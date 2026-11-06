@@ -10,8 +10,9 @@ export function shareHtml(row, grader, cert) {
   const name = `${row.card_name || ""} ${row.card_no ? "#" + row.card_no : ""}`.trim();
   const title = name ? `${name} · Gacha Mark` : `Gacha Mark · PSA ${cert}`;
   const bits = [row.set_name, row.year, row.grade].filter(Boolean);
+  const basis = row.price_basis === "psa10-sold" ? "PSA 10 sold comps" : "asking prices";
   const desc = bits.join(" · ") + (row.point_usd != null ? ` · value point ${money(row.point_usd)}` : "") +
-    " · checked against the onchain registry. Asking prices, not completed sales.";
+    ` · basis: ${basis} · checked against the onchain registry.`;
   const url = `${HOST}/verify/${encodeURIComponent(grader)}/${encodeURIComponent(cert)}`;
   const img = row.cert ? `${HOST}/og/${encodeURIComponent(cert)}.png` : `${HOST}/og-image-new.png`;
   const target = `${HOST}/platform#/cert/${encodeURIComponent(cert)}`;
