@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clean Check — cert claim lookup | Gacha Galaxy</title>
+<meta name="description" content="Look up a graded card cert and see every claim on it: Gacha Marks and live Collector Crypt listings. Built to catch one cert sold or listed twice.">
+<style>
+  :root{
+    --bg:#0b0d12;--panel:#12151d;--panel2:#171b25;--line:#242a38;--ink:#eef1f7;--dim:#9aa4b8;--faint:#6b7488;
+    --accent:#7c5cff;--ok:#3ecf8e;--warn:#f5a524;--bad:#ff5c72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink)}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 72px}
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:44px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:.2px;text-decoration:none;font-size:15px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(124,92,255,.18)}
+  nav a{color:var(--dim);text-decoration:none;font-size:14px;margin-left:18px}
+  nav a:hover{color:var(--ink)}
+  h1{font-size:clamp(28px,4.4vw,40px);line-height:1.12;letter-spacing:-.02em;margin:0 0 12px;font-weight:680}
+  .lede{color:var(--dim);font-size:17px;margin:0 0 28px;max-width:62ch}
+  form.lookup{display:flex;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+  input[type=text],select{
+    background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:11px;
+    padding:14px 15px;font-size:16px;font-family:inherit;outline:none
+  }
+  input[type=text]{flex:1 1 260px;min-width:0;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,92,255,.16)}
+  select{flex:0 0 auto;padding-right:34px}
+  button{
+    background:var(--accent);color:#fff;border:0;border-radius:11px;padding:14px 22px;font-size:15px;
+    font-weight:600;font-family:inherit;cursor:pointer;flex:0 0 auto
+  }
+  button:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.6;cursor:default}
+  .hint{color:var(--faint);font-size:13px;margin:0 0 34px}
+  .result{display:none}
+  .result.on{display:block}
+  .verdict{
+    border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 22px;background:var(--panel)
+  }
+  .verdict.clear{border-color:rgba(62,207,142,.4);background:rgba(62,207,142,.07)}
+  .verdict.flag{border-color:rgba(255,92,114,.45);background:rgba(255,92,114,.07)}
+  .verdict.none{border-color:var(--line)}
+  .vtitle{font-size:18px;font-weight:640;margin:0 0 4px}
+  .vsub{color:var(--dim);font-size:14px;margin:0}
+  h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:30px 0 12px;font-weight:600}
+  .claim{border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-bottom:10px;background:var(--panel)}
+  .claim .row1{display:flex;justify-content:space-between;gap:14px;align-items:baseline;flex-wrap:wrap}
+  .claim .card{font-weight:600;font-size:15px}
+  .claim .src{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+  .claim .meta{color:var(--dim);font-size:13.5px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);color:var(--dim)}
+  .pill.ours{border-color:rgba(124,92,255,.45);color:#b4a4ff;background:rgba(124,92,255,.1)}
+  .pill.cc{border-color:rgba(62,207,142,.4);color:#7ee6b4;background:rgba(62,207,142,.08)}
+  .empty{color:var(--faint);font-size:14px;border:1px dashed var(--line);border-radius:12px;padding:18px}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px}
+  footer a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line)}
+  .cov{display:flex;gap:26px;flex-wrap:wrap;margin:34px 0 0;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+  .cov div{flex:1 1 150px}
+  .cov b{display:block;font-size:21px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .cov span{color:var(--faint);font-size:12.5px}
+  @media (max-width:560px){
+    .wrap{padding:20px 16px 56px}
+    header.top{margin-bottom:32px}
+    nav a{margin-left:12px;font-size:13px}
+    form.lookup{flex-direction:column}
+    input[type=text],select,button{width:100%;flex:1 1 auto}
+    .cov{gap:16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><span class="dot"></span>Gacha Galaxy</a>
+    <nav><a href="/check">Price check</a><a href="/platform#/certified">Marks</a></nav>
+  </header>
+
+  <h1>Clean Check</h1>
+  <p class="lede">Enter a graded card cert number. We show every claim we hold on it — our Gacha Marks and live Collector Crypt listings — and flag the cases that need a human look.</p>
+
+  <form class="lookup" id="f" autocomplete="off">
+    <input type="text" id="cert" inputmode="numeric" placeholder="Cert number, e.g. 109308847" aria-label="Cert number">
+    <select id="grader" aria-label="Grader">
+      <option value="">Any grader</option>
+      <option value="PSA">PSA</option>
+      <option value="CGC">CGC</option>
+    </select>
+    <button type="submit" id="go">Check</button>
+  </form>
+  <p class="hint">Numbers only. Dashes and spaces are fine.</p>
+
+  <div class="result" id="out"></div>
+
+  <div class="cov">
+    <div><b id="ncc">—</b><span>live listings indexed</span></div>
+    <div><b id="nown">—</b><span>claims in our records</span></div>
+    <div><b>2</b><span>sources compared</span></div>
+  </div>
+
+  <footer>
+    Covers Collector Crypt listings and Gacha Galaxy records only — not every marketplace. A flag means “check this by hand”, never a verdict on a slab.
+    <br><a href="/check">Free price check</a> · <a href="/platform#/certified">Gacha Mark register</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var OWN=[],OWNLOAD=false,CCCOUNT=0;
+  var f=document.getElementById('f'),certEl=document.getElementById('cert'),graderEl=document.getElementById('grader'),
+      out=document.getElementById('out'),go=document.getElementById('go');
+
+  function norm(s){var d=String(s==null?'':s).replace(/\D/g,'');return d.replace(/^0+(?=\d)/,'')}
+  function gradeNum(s){var m=String(s==null?'':s).match(/\d+(\.\d)?/);return m?Number(m[0]):null}
+  function card(s){return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function money(v){if(v==null)return '—';return '$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0})}
+  function dshort(s){return s?String(s).slice(0,10):''}
+
+  function loadOwn(){
+    if(OWNLOAD)return Promise.resolve(OWN);
+    return fetch('/data/own-claims.json').then(function(r){return r.ok?r.json():[]}).then(function(d){
+      OWN=d||[];OWNLOAD=true;document.getElementById('nown').textContent=OWN.length;return OWN;
+    }).catch(function(){OWN=[];OWNLOAD=true;return OWN});
+  }
+
+  function loadShard(cert){
+    var pre=cert.slice(0,3);
+    return fetch('/data/cc/'+pre+'.json').then(function(r){
+      if(r.status===404)return [];
+      if(!r.ok)throw new Error('lookup failed ('+r.status+')');
+      return r.json();
+    }).catch(function(){return []});
+  }
+
+  function check(claims){
+    var flags=[],by={};
+    claims.forEach(function(c){
+      var k=(c.grader||'PSA')+'/'+c.cert;
+      (by[k]=by[k]||[]).push(c);
+    });
+    Object.keys(by).forEach(function(k){
+      var list=by[k];
+      var owners={},cards={},grades={};
+      list.forEach(function(x){
+        if(x.owner)owners[String(x.owner)]=1;
+        var cd=card(x.card);if(cd)cards[cd]=1;
+        var g=gradeNum(x.grade);if(g!==null)grades[g]=1;
+      });
+      if(Object.keys(owners).length>1)flags.push({kind:'multi_owner',owners:Object.keys(owners)});
+      if(Object.keys(cards).length>1)flags.push({kind:'identity_conflict',field:'card',values:Object.keys(cards)});
+      if(Object.keys(grades).length>1)flags.push({kind:'identity_conflict',field:'grade',values:Object.keys(grades)});
+    });
+    return flags;
+  }
+
+  function render(cert,ccRows,ownRows){
+    var claims=[];
+    ownRows.forEach(function(c){claims.push({source:c.source==='mark'?'mark':c.source==='collection'?'collection':'request',
+      grader:(c.grader||'PSA').toUpperCase(),cert:cert,owner:c.owner,card:c.card,grade:c.grade,when:c.when})});
+    ccRows.forEach(function(c){claims.push({source:'cc',grader:c.grader,cert:cert,owner:'Collector Crypt: '+(c.nft||'nft'),
+      card:c.name,grade:c.grade,ask:c.ask,when:c.listed,status:c.status})});
+
+    var flags=check(claims);
+    var v='none',title='No claims on this cert',sub='Nothing in our marks or in the Collector Crypt listings we index. That is not a clean bill of health — only that these two sources are silent.';
+    if(flags.length){
+      v='flag';
+      var f0=flags[0];
+      if(f0.kind==='multi_owner'){title='Two different owners on one cert';sub='The same cert is claimed by more than one party. Treat as a duplicate until confirmed by hand.'}
+      else{title='Cert recorded with conflicting details';sub='Same cert number, different '+(f0.field==='card'?'card name':'grade')+'. Usually a typo or a relabel — check the slab.'}
+    } else if(claims.length===1&&ccRows.length===1){
+      v='clear';title='Listed, and nothing contradicts it';
+      sub='This cert is listed on Collector Crypt and no other source in our index claims it. Single claim, single owner.';
+    } else if(ccRows.length===1){
+      v='clear';title='Listed on Collector Crypt';sub='One live listing, no competing claim in our records.';
+    } else if(ownRows.length){
+      v='clear';title='Claimed in our records';sub='We hold a Gacha Mark or collection entry for this cert, and nothing contradicts it.';
+    }
+
+    var h='';
+    h+='<div class="verdict '+v+'"><p class="vtitle">'+esc(title)+'</p><p class="vsub">'+esc(sub)+'</p></div>';
+
+    h+='<h2>Claims found ('+claims.length+')</h2>';
+    if(!claims.length){
+      h+='<div class="empty">No claim for cert '+esc(cert)+' in either source.</div>';
+    } else {
+      claims.forEach(function(c){
+        var pill=c.source==='cc'?'<span class="pill cc">Collector Crypt</span>':
+                 c.source==='mark'?'<span class="pill ours">Gacha Mark</span>':
+                 c.source==='collection'?'<span class="pill ours">Collection</span>':'<span class="pill">Request</span>';
+        var meta=[];
+        if(c.grade)meta.push('Grade '+esc(c.grade));
+        if(c.ask!=null)meta.push('Asking '+money(c.ask));
+        if(c.status)meta.push(esc(c.status));
+        if(c.when)meta.push('Listed '+esc(dshort(c.when)));
+        if(c.source!=='cc'&&c.when)meta.push('On record '+esc(dshort(c.when)));
+        h+='<div class="claim"><div class="row1"><span class="card">'+esc(c.card||'Unknown card')+'</span>'+pill+'</div>'
+          +'<div class="meta">'+meta.join(' · ')+'</div>'
+          +'<div class="meta" style="color:var(--faint);font-size:12.5px">'+esc(c.owner||'')+'</div></div>';
+      });
+    }
+
+    if(flags.length>1){
+      h+='<h2>All flags</h2>';
+      flags.forEach(function(f){
+        h+='<div class="claim"><div class="meta">'+esc(f.kind==='multi_owner'?'Multiple owners: '+f.owners.join(', '):'Conflicting '+f.field+': '+f.values.join(' / '))+'</div></div>';
+      });
+    }
+    out.innerHTML=h;out.className='result on';
+    try{history.replaceState(null,'','?cert='+encodeURIComponent(cert))}catch(e){}
+  }
+
+  function run(){
+    var cert=norm(certEl.value),g=graderEl.value;
+    if(!cert){certEl.focus();return}
+    go.disabled=true;go.textContent='Checking…';
+    Promise.all([loadOwn(),loadShard(cert)]).then(function(res){
+      var ownAll=res[0],shard=res[1]||[];
+      var ownRows=ownAll.filter(function(c){
+        if(norm(c.cert)!==cert)return false;
+        return !g||String(c.grader||'PSA').toUpperCase()===g;
+      });
+      var ccRows=shard.filter(function(c){
+        if(c.cert!==cert)return false;
+        return !g||c.grader===g;
+      });
+      render(cert,ccRows,ownRows);
+    }).catch(function(e){
+      out.className='result on';
+      out.innerHTML='<div class="verdict flag"><p class="vtitle">Could not run the check</p><p class="vsub">'+esc(e.message||'lookup failed')+'</p></div>';
+    }).then(function(){
+      go.disabled=false;go.textContent='Check';
+    });
+  }
+
+  f.addEventListener('submit',function(e){e.preventDefault();run()});
+  var q=new URLSearchParams(location.search).get('cert');
+  if(q){certEl.value=q;run()}
+  // coverage counter: how many certs are indexed
+  fetch('/data/cc/index.json').then(function(r){return r.ok?r.json():null}).then(function(d){
+    if(d&&d.certs)document.getElementById('ncc').textContent=d.certs.toLocaleString('en-US');
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
