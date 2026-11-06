@@ -35,13 +35,22 @@ export async function onRequestPost({ request, env }) {
     reason: 'web request \u00b7 ' + grader + ' \u00b7 ' + email
   };
 
-  const r = await fetch(SB + '/rest/v1/mark_requests?on_conflict=psa_cert', {
+  const h = { apikey: key, Authorization: 'Bearer ' + key };
+
+  // Already queued for this cert? Treat it as success, do not duplicate the row.
+  const chk = await fetch(SB + '/rest/v1/mark_requests?select=id&psa_cert=eq.' + cert + '&limit=1', { headers: h });
+  if (chk.ok) {
+    const seen = await chk.json().catch(() => []);
+    if (Array.isArray(seen) && seen.length) return json({ ok: true, cert: cert, grader: grader, existing: true });
+  }
+
+  const r = await fetch(SB + '/rest/v1/mark_requests', {
     method: 'POST',
     headers: {
       apikey: key,
       Authorization: 'Bearer ' + key,
       'content-type': 'application/json',
-      Prefer: 'return=minimal,resolution=merge-duplicates'
+      Prefer: 'return=minimal'
     },
     body: JSON.stringify(row)
   });
