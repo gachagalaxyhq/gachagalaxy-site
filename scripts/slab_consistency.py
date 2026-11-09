@@ -106,8 +106,52 @@ def psa_check(expected, row, payload):
             'reason': 'Record consistency only; physical slab authenticity not established'}
 
 
+DAILY_CAP = 45  # PSA plan allows 50/day; keep 5 spare for manual checks.
+
+
+class DailyLedger:
+    """Counts PSA calls per UTC day across runs, so separate batches cannot
+    together exceed the plan limit. Every network attempt counts, including
+    errors, because the provider may count them too."""
+
+    def __init__(self, path, cap=DAILY_CAP, today=None):
+        if type(cap) is not int or not 0 <= cap <= 50:
+            raise ValueError('PSA daily cap must be between zero and 50')
+        self.path = Path(path)
+        self.cap = cap
+        self._today = today
+
+    def today(self):
+        return self._today() if self._today else datetime.now(timezone.utc).date().isoformat()
+
+    def _read(self):
+        try:
+            data = json.loads(self.path.read_text())
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def used(self):
+        value = self._read().get(self.today(), 0)
+        return value if type(value) is int and value >= 0 else self.cap
+
+    def take(self):
+        data = self._read()
+        day = self.today()
+        used = data.get(day, 0)
+        if type(used) is not int or used < 0 or used >= self.cap:
+            return False
+        data = {k: v for k, v in data.items() if k >= day[:8]}  # keep current month only
+        data[day] = used + 1
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.path.with_suffix('.tmp')
+        tmp.write_text(json.dumps(data, sort_keys=True))
+        tmp.replace(self.path)
+        return True
+
+
 class PSAClient:
-    def __init__(self, token_file, max_calls=0, offline=False):
+    def __init__(self, token_file, max_calls=0, offline=False, ledger=None):
         if type(max_calls) is not int or not 0 <= max_calls <= 50:
             raise ValueError('PSA batch call budget must be between zero and 50')
         self.token_file = Path(token_file)
@@ -116,6 +160,7 @@ class PSAClient:
         self.blocked = None
         self.cache = {}
         self.offline = offline
+        self.ledger = ledger
 
     def lookup(self, cert):
         if self.offline:
@@ -130,6 +175,8 @@ class PSAClient:
             return None, 'Batch API call budget reached'
         if not self.token_file.is_file():
             return None, 'PSA credential unavailable'
+        if self.ledger is not None and not self.ledger.take():
+            return None, 'PSA daily call cap reached'
         self.calls += 1
         req = urllib.request.Request(
             'https://api.psacard.com/publicapi/cert/GetByCertNumber/' + cert,
@@ -355,6 +402,8 @@ def main():
     parser.add_argument('--offline', action='store_true', help='Never read credentials or call PSA/network')
     parser.add_argument('--token-file', default=str(Path.home() / '.secrets/psa_token'))
     parser.add_argument('--max-psa-calls', type=int, default=0)
+    parser.add_argument('--psa-ledger', default=str(Path.home() / '.gg-psa/usage.json'),
+                        help='Per-UTC-day PSA call counter shared by all runs')
     args = parser.parse_args()
     if not 0 <= args.max_psa_calls <= 50:
         parser.error('PSA batch call budget must be between zero and 50')
@@ -370,7 +419,8 @@ def main():
         evidence_bytes = Path(args.qr_evidence).read_bytes()
         rows = normalize_rows(json.loads(row_bytes))
         evidence = validate_evidence(json.loads(evidence_bytes))
-        client = PSAClient(args.token_file, args.max_psa_calls, offline=args.offline)
+        client = PSAClient(args.token_file, args.max_psa_calls, offline=args.offline,
+                           ledger=None if args.offline else DailyLedger(args.psa_ledger))
         checked_at = datetime.now(timezone.utc).isoformat()
         results = run(rows, evidence, client, offline=args.offline, checked_at=checked_at)
         totals = summary(rows, results, client.calls)
