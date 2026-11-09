@@ -119,7 +119,7 @@
   <details class="service-details"><summary>Need a Gacha Mark evidence review?</summary><p>Requests are separate from this free lookup. New requests are not complimentary. Payments are inactive; submitting a request is not a paid order or an issued Mark.</p><a href="/check#request">Request an evidence review →</a> · <a href="/certificate">Service details →</a></details>
 
   <div class="cov">
-    <div><b id="ncc">—</b><span>listings in saved index</span></div>
+    <div><b id="ncc">—</b><span>listings in saved index</span><small id="ccdate">Saved index date: not available</small></div>
     <div><b id="nown">—</b><span>claims in our records</span></div>
     <div><b>2</b><span>indexed sources · availability shown per check</span></div>
   </div>
@@ -304,6 +304,7 @@
   // coverage counter: how many certs are indexed
   fetch('/data/cc/index.json').then(function(r){return r.ok?r.json():null}).then(function(d){
     if(d&&d.certs)document.getElementById('ncc').textContent=d.certs.toLocaleString('en-US');
+    if(d&&typeof d.updated==='string'&&/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(d.updated))document.getElementById('ccdate').textContent='Saved index date: '+d.updated.slice(0,10)+' (separate from scanner prices)';
   }).catch(function(){});
 })();
 </script>
