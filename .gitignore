@@ -2,3 +2,6 @@ data/raw_cc.json
 __pycache__/
 *.log
 shot_*.json
+.wrangler/
+operations/mark-signing.html
+operations/pre-issuance-certs.json
