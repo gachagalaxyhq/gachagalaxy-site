@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
-const {cardPassport}=createRequire(import.meta.url)('../src/card-passport.js');
+const require=createRequire(import.meta.url);
+const {cardPassport,passportSourceUrl}=require('../src/card-passport.js');
+const {parseHTML}=require('linkedom');
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const page=read('public/platform.html');
 const D=JSON.parse(page.split('const D=')[1].split(';const $=')[0]);
@@ -36,15 +38,17 @@ test('Passport photo mapping requires exact grader cert title and grade, with no
  assert.equal(cardPassport('CGC','27867218',rows,D.certs,D.passportImages).status,'missing');
 });
 async function render(cert,rows=shard,ok=true,changeRoute=false){
- const view={innerHTML:''},status={textContent:''},button={};const location={hash:'#/passport/PSA/'+cert,origin:'https://example.invalid'};
- const context=vm.createContext({D,V:view,cardPassport,journeyCopy:()=>'',esc:s=>String(s??'').replace(/</g,'&lt;').replace(/>/g,'&gt;'),money:n=>n==null?'—':'$'+n.toLocaleString('en-US'),setTab(){},location,window:{scrollTo(){}},navigator:{clipboard:{writeText:async()=>{}}},$:s=>s==='#passport-share'?button:status,fetch:async()=>{if(changeRoute){location.hash='#/cards';view.innerHTML='New route'}return{ok,json:async()=>rows}}});
+ // Real (linkedom) DOM: passport() post-processes its markup with querySelector/insertAdjacentHTML.
+ const {document}=parseHTML('<!doctype html><html><body><main id="v"></main></body></html>');
+ const view=document.getElementById('v'),status={textContent:''},button={};const location={hash:'#/passport/PSA/'+cert,origin:'https://example.invalid'};
+ const context=vm.createContext({D,V:view,cardPassport,passportSourceUrl,journeyCopy:()=>'',esc:s=>String(s??'').replace(/</g,'&lt;').replace(/>/g,'&gt;'),money:n=>n==null?'—':'$'+n.toLocaleString('en-US'),setTab(){},location,window:{scrollTo(){}},navigator:{clipboard:{writeText:async()=>{}}},$:s=>s==='#passport-share'?button:status,fetch:async()=>{if(changeRoute){location.hash='#/cards';view.innerHTML='New route'}return{ok,json:async()=>rows}}});
  const start=page.indexOf('async function passport('),end=page.indexOf('const img=',start);
   vm.runInContext(page.slice(page.indexOf('function detailDate('),page.indexOf('async function catalogueDetail(')),context);
   vm.runInContext(page.slice(start,end),context);await vm.runInContext('passport("PSA","'+cert+'")',context);return{view,button,status};
 }
 test('Passport renders honest absent states and working share-link action',async()=>{
  const {view,button,status}=await render('109863355');
- for(const text of ['class="cimg"','No Gacha Mark in these records','No new check has been run','Live verification has not been performed','$2,600','/cleancheck?cert=109863355','not physical authentication'])assert.ok(view.innerHTML.includes(text),text);
+ for(const text of ['class="cimg"','No Gacha Mark in these records','No new check has been run','Live verification has not been performed','$2,600','/cleancheck?cert=109863355','Physical authentication: not performed','does not create a new report or prove authenticity'])assert.ok(view.innerHTML.includes(text),text);
  await button.onclick();assert.equal(status.textContent,'Passport link copied.');
 });
 test('Passport source failures preserve only separately bundled Mark evidence',async()=>{
@@ -61,7 +65,8 @@ test('Passport sources are escaped and invalid routes perform no lookup',async()
 test('architecture copy and saved-only Passport handoffs are wired without live claims',()=>{
  assert.match(page,/if\(a==='passport'\)return passport/);assert.match(page,/Open Card Passport/);
  assert.match(page,/Live verification has not been performed by this page/);assert.match(page,/opening it does not run a check or issue a report/);
- assert.match(read('public/cleancheck.html'),/Open Card Passport · saved presentation/);
+ assert.match(read('public/cleancheck.html'),/Open Card Passport →/);
+ assert.match(read('public/cleancheck.html'),/Passport shares available saved card details and evidence; it does not issue a token or another certification/);
  assert.match(read('public/certificate.html'),/Where Passport fits/);
  assert.doesNotMatch(page,/__CARD_PASSPORT_JS__/);
 });
