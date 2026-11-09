@@ -10,7 +10,7 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  opt=opt||{};const VD=opt.validDays||30,A=markPdfAscii,base=opt.base||'https://gachagalaxy.io/platform#/cert/';
  const doc=new jsPDF({unit:'mm',format:'a4',compress:true});const W=210,H=297,M=16;
  const ink=[26,18,40],dim=[110,104,124],line=[226,222,234],pur=[122,34,201],grn=[22,128,84],amb=[180,83,9];
- const st=markPdfStatus(c,now,VD);const test=c.network==='robinhood-testnet'||c.kind==='example';
+  const st=markPdfStatus(c,now,VD);const test=c.network==='robinhood-testnet'||c.kind==='example'||(c.ev||[])[0]?.chainId===46630;
  const money=v=>v==null||isNaN(v)?'-':'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
  const d=t=>t?new Date(t).toISOString().slice(0,10):'-';
  const tier=s=>s>=70?'High':s>=40?'Medium':'Low';
@@ -31,7 +31,7 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  const title=doc.splitTextToSize(A(`${c.name} ${c.num||''}`.trim()),tw);doc.text(title,x,y+6);let ty=y+6+title.length*8;
  doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...dim);
  const sub=doc.splitTextToSize(A([c.set,c.year,c.grade+(c.gradeLabel?` (${c.gradeLabel})`:'')].filter(Boolean).join(' | ')),tw);doc.text(sub,x,ty);ty+=sub.length*5+1;
- doc.text(A(`${c.grader||'PSA'} cert ${c.cert}`),x,ty);ty+=10;
+  doc.text(A(`${c.grader||'PSA'} cert ref ${c.cert}`),x,ty);ty+=10;
  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.text('VALUE POINT',x,ty);ty+=9;
  doc.setTextColor(...ink);doc.setFontSize(30);doc.text(money(c.point),x,ty);ty+=8;
  // band
@@ -40,7 +40,7 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...dim);doc.text(money(lo),x,ty);doc.text(money(hi),x+bw,ty,{align:'right'});ty+=9;
  // facts grid
  const facts=[['Value band',`${money(lo)} - ${money(hi)}`],['Confidence',`${c.conf} / 100 (${tier(c.conf)})`],['Prices used',String(c.prices??'-')],
-  ['Published',d(st.last)],['Refresh due',st.k==='revoked'?'Revoked':d(st.until)],['Network',c.network==='robinhood-testnet'?'Robinhood Chain testnet':'Robinhood Chain']];
+   ['Published',d(st.last)],['Refresh due',st.k==='revoked'?'Revoked':d(st.until)],['Network',test?'Robinhood Chain testnet':'Robinhood Chain']];
  const cw=tw/2;facts.forEach((f,i)=>{const fx=x+(i%2)*cw,fy=ty+Math.floor(i/2)*12;doc.setFontSize(7.5);doc.setTextColor(...dim);doc.setFont('helvetica','bold');doc.text(f[0].toUpperCase(),fx,fy);
   doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...ink);doc.text(A(f[1]),fx,fy+5)});
  y=Math.max(y+ih,ty+36)+8;
@@ -60,14 +60,14 @@ function buildMarkPdf(jsPDF,c,assets,now,opt){
  const vx=M+(assets.qr?qs+8:0);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...ink);doc.text('Check this record',vx,y+6);
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...dim);
  const url=base+c.cert;doc.textWithLink(A(url),vx,y+12,{url});
- doc.text(doc.splitTextToSize('Scan the code or open the link. The live page and the onchain record are the source of truth; this PDF is a snapshot.',W-M-vx),vx,y+18);
+  doc.text(doc.splitTextToSize('Open the record link, then compare its dated events and network with the registry. This PDF is a snapshot, not a fresh verification.',W-M-vx),vx,y+18);
  y+=qs+6;
  // basis + limits
  doc.setFontSize(7.5);doc.setTextColor(...dim);
- const basis=c.priceBasis==='sold'?'Price basis: completed sales, normalised by grade.':'Price basis: asking prices and insured values from public marketplace listings, normalised by grade. These are not completed sales.';
- const lim='A Gacha Mark checks the cert, the card details and the price. It does not physically inspect the card and does not prove authenticity, ownership, custody or a sale price. Authenticity rests on the grading company.';
+  const basis=c.price_basis==='psa10-sold'||c.priceBasis==='sold'?'Price basis: completed sales reference, saved and normalised by grade. Not a sale of this specific cert.':'Price basis: asking prices and insured values from public marketplace listings, normalised by grade. These are not completed sales.';
+  const lim='Grader record: not_checked. QR-to-cert match: not_checked. Physical authenticity: not_checked. This saved record does not prove authenticity, ownership, custody or a sale price. No new verification or Mark issuance is performed by this export.';
  const foot=doc.splitTextToSize(basis+' '+lim,W-2*M);doc.text(foot,M,Math.min(y,H-26));
- doc.setFontSize(7);doc.text(A(`Generated ${new Date(now).toISOString().slice(0,16).replace('T',' ')} UTC from the live certificate record.`),M,H-10);
+  doc.setFontSize(7);doc.text(A(`Generated ${new Date(now).toISOString().slice(0,16).replace('T',' ')} UTC. Snapshot of displayed data; not a fresh chain check.`),M,H-10);
  doc.text('gachagalaxy.io',W-M,H-10,{align:'right'});
  // watermarks
  const wm=st.k==='revoked'?'REVOKED':test?'PRE-PRODUCTION':null;

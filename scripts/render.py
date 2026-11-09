@@ -21,25 +21,44 @@ def clean_name(n):
     n = _re.sub(r"\b(Vmax|Vstar)\b", lambda m: m.group(1).upper(), n)
     n = _re.sub(r"\s+", " ", n)
     return n + (" (Full Art)" if fa else "")
+from build_decoded_catalogue import build as build_decoded_catalogue
+decoded_catalogue, decoded_ids = build_decoded_catalogue()
 cards = []
 for k, c in enumerate(cc["cards"], 1):
     key = f"{c['set']}|{c['no']}|{c['grade']}"
-    L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"], (l.get("cert") or None) if c["grade"].startswith("PSA") else None] for l in c["listings"]]
+    L = [["Collector Crypt", c["grade"], l["ask"], c["point"], l["gap"], (l.get("cert") or None) if c["grade"].startswith("PSA") else None, 'source_id:' + l['id'] in decoded_ids, l['id']] for l in c["listings"]]
     H = hist.get(key) or [[cc["updated"][:10], c["point"], None]]
-    cards.append(dict(i=k, k=key, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
+    cards.append(dict(i=k, k=key, decoded='source_id:' + c['id'] in decoded_ids, n=clean_name(c["name"]), s=c["set"], no=c["no"], cn=clean_name(c["name"]), cl=f"{c['set']} · #{c['no']}",
         la=c["low_ask"], se=True, f=c["featured"], lp="Collector Crypt", g=c["grade"], ga=c["point"], gn=c["n"],
-        u=None, im=(f"https://gachagalaxy-site.pages.dev/cards/{c['id']}.webp" if os.path.exists(f"{R}/public/cards/{c['id']}.webp") else c["img"]), pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
+        u=None, im=(f"/cards/{c['id']}.webp" if os.path.exists(f"{R}/public/cards/{c['id']}.webp") else c["img"]), pv=[dict(grade=c["grade"], low=c["low"], point=c["point"], high=c["high"],
         confidence=c["confidence"], tier=c["tier"], prices_used=c["prices_used"], eligible=True)], L=L, H=H))
 cards.sort(key=lambda x: (not x["f"], -x["ga"]))
 df = cards[0]["i"]
 D = dict(df=df, cards=cards, certs=certs, exp=EXP, oc=oc, markets=["Collector Crypt"])
 SB_KEY = "sb_publishable_zuvJafFZrz4JStpgfljeUQ_Lj5l-05E"  # publishable key: safe in the browser, RLS protects data
 os.makedirs(f"{R}/public", exist_ok=True)
+os.makedirs(f"{R}/public/data", exist_ok=True)
+# Only bundled public Mark evidence belongs in this public feed, not users or requests.
+claims = []
+for mark in certs:
+    events = mark.get('ev') or []
+    latest = max(events, key=lambda event: event['t']) if events else None
+    claims.append(dict(source='mark', grader=mark.get('grader', 'PSA'), cert=mark['cert'],
+                       owner='Gacha Galaxy (marked)',
+                       card=' '.join(filter(None, [mark.get('name'), mark.get('num')])),
+                       grade=mark.get('grade'),
+                       chain='Robinhood Chain testnet' if latest and latest.get('chainId') == 46630 else '',
+                       when=latest['t'] if latest else ''))
+json.dump(claims, open(f"{R}/public/data/own-claims.json", 'w'), separators=(',', ':'))
 json.dump(dict(updated=cc["updated"], cards={c["k"]: [c["cn"], c["cl"], c["g"], c["ga"]] for c in cards}), open(f"{R}/public/prices.json", "w"), separators=(",", ":"))  # read by price-alert function
 p = open(f"{R}/src/platform.tpl.html", encoding="utf-8").read()
+p = p.replace('Search 250 graded Pokémon cards (PSA and CGC) with fair-value bands, confidence scores, price alerts and the mispricing scanner.', 'Browse the full saved Collector Crypt listing catalogue, with partial saved scan evidence. Price-comparison groups and Gacha Mark records are separate.')
+p = p.replace("__CATALOGUE_JS__", open(f"{R}/src/catalogue.js", encoding="utf-8").read())
+shutil.copyfile(f"{R}/src/catalogue-worker.js", f"{R}/public/data/catalogue-search.js")
 p = p.replace("__CC_DATA__", json.dumps(D, separators=(",", ":"))).replace("__UPDATED__", upd).replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
 p = p.replace("__CHAINCHECK_JS__", _re.sub(r"if\(typeof module!=='undefined'\)module\.exports=\{[^}]*\};?", "", open(f"{R}/src/chaincheck.js", encoding="utf-8").read()))
 p = p.replace("__MARKPDF_JS__", _re.sub(r"if\(typeof module!=='undefined'\)module\.exports=\{[^}]*\};?", "", open(f"{R}/src/markpdf.js", encoding="utf-8").read()))
+p = p.replace("__CARD_PASSPORT_JS__", _re.sub(r"if\(typeof module!=='undefined'\)module\.exports=\{[^}]*\};?", "", open(f"{R}/src/card-passport.js", encoding="utf-8").read()))
 open(f"{R}/public/platform.html", "w", encoding="utf-8").write(p)
 # scanner: one row per card, gap < 300%, asks >= $20, grade 8+, 10 below then 10 above
 rows = []
@@ -65,14 +84,16 @@ def tr(g, c, l):
 h = open(f"{R}/src/index.tpl.html", encoding="utf-8").read()
 h = h.replace("__SCAN_ROWS__", "".join(tr(*v) for v in below + above)).replace("__UPDATED__", upd)
 h = h.replace("gg-platform-final.html", "platform.html").replace("__SB_URL__", "https://jknodjsmpjwocpljnohc.supabase.co").replace("__SB_KEY__", SB_KEY)
-open(f"{R}/public/index.html", "w", encoding="utf-8").write(h)
+if __import__('sys').argv[1:] != ['--platform-only']:
+    open(f"{R}/public/index.html", "w", encoding="utf-8").write(h)
 for f in ["og-image-new.png"]:
     if os.path.exists(f"{R}/{f}"): shutil.copy(f"{R}/{f}", f"{R}/public/{f}")
 for f in ["favicon.ico", "apple-touch-icon.png", "robots.txt"]:  # served on gachagalaxy.io via Worker gg-paths
     if os.path.exists(f"{R}/static/{f}"): shutil.copy(f"{R}/static/{f}", f"{R}/public/{f}")
-_d = __import__("datetime").date.today().isoformat()
-open(f"{R}/public/sitemap.xml", "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(
-    f"<url><loc>https://gachagalaxy.io{u}</loc><lastmod>{_d}</lastmod></url>\n" for u in ["/", "/platform", "/terms/", "/privacy/", "/risk-disclosure/", "/how-gacha-mark-works/"]) + "</urlset>\n")
+if __import__('sys').argv[1:] != ['--platform-only']:
+    _d = __import__("datetime").date.today().isoformat()
+    open(f"{R}/public/sitemap.xml", "w").write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(
+        f"<url><loc>https://gachagalaxy.io{u}</loc><lastmod>{_d}</lastmod></url>\n" for u in ["/", "/platform", "/terms/", "/privacy/", "/risk-disclosure/", "/how-gacha-mark-works/"]) + "</urlset>\n")
 import re, hashlib, base64
 os.makedirs(f"{R}/public/assets", exist_ok=True)
 EXT = {"image/png":"png","image/jpeg":"jpg","image/gif":"gif","image/svg+xml":"svg","image/webp":"webp"}
@@ -82,8 +103,8 @@ def unin(m):
     raw = base64.b64decode(b); n = hashlib.sha1(raw).hexdigest()[:12] + "." + EXT[mime]
     fp = f"{R}/public/assets/{n}"
     if not os.path.exists(fp): open(fp, "wb").write(raw)
-    return "https://gachagalaxy-site.pages.dev/assets/" + n
-for f in ["index.html", "platform.html"]:
+    return "/assets/" + n
+for f in (["platform.html"] if __import__('sys').argv[1:] == ['--platform-only'] else ["index.html", "platform.html"]):
     fp = f"{R}/public/{f}"; t = open(fp, encoding="utf-8").read()
     t = re.sub(r"data:([a-z/+]+);base64,([A-Za-z0-9+/=]+)", unin, t)
     open(fp, "w", encoding="utf-8").write(t)

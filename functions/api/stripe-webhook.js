@@ -1,5 +1,6 @@
 // Stripe webhook: marks a paid mark_request as paid. No SDK — Web Crypto only.
 const SB = 'https://jknodjsmpjwocpljnohc.supabase.co';
+const PAYMENTS_AVAILABLE = false; // No activation through environment configuration.
 
 const enc = new TextEncoder();
 const hex = (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -28,6 +29,9 @@ export async function verify(raw, header, secret) {
 const json = (b, s) => new Response(JSON.stringify(b), { status: s || 200, headers: { 'content-type': 'application/json' } });
 
 export async function onRequestPost({ request, env }) {
+  // Keep payment writes off along with checkout. Timestamp/replay and expected
+  // amount/currency validation still require review before any activation.
+  if (!PAYMENTS_AVAILABLE || !env || env.MARK_PAYMENTS_ENABLED !== 'true') return json({ ok: false, error: 'Payments are inactive.' }, 503);
   const raw = await request.text();
   const ok = await verify(raw, request.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET);
   if (!ok) return json({ ok: false, error: 'bad signature' }, 400);

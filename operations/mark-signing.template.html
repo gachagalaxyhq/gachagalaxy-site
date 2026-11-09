@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gacha Mark — six-card signing handoff</title>
+<style>
+:root{color-scheme:light;--ink:#172638;--muted:#526277;--line:#cbd5df;--blue:#174a78;--paper:#f5f7fa;--warn:#744b0d}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,sans-serif}main{max-width:1080px;margin:auto;padding:28px 24px}h1{font-size:30px;margin:0 0 10px}h2{font-size:20px;margin:0}p{margin:8px 0}code,pre{font:12px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}pre{white-space:pre-wrap;max-height:250px;overflow:auto}section,.card{background:white;border:1px solid var(--line);padding:20px;margin:18px 0;border-radius:8px}.notice{border-left:5px solid var(--warn)}button{background:var(--blue);color:white;border:0;border-radius:5px;padding:11px 16px;font:inherit;cursor:pointer;margin:6px 8px 6px 0}button:disabled{background:#77828e;cursor:not-allowed}button:focus-visible,input:focus-visible{outline:3px solid #bb811f;outline-offset:3px}.meta{color:var(--muted);font-size:14px}.card{display:grid;grid-template-columns:115px 1fr;gap:20px}.card img{width:110px;max-height:190px;object-fit:contain}.state{font-weight:650;margin-top:10px;white-space:pre-wrap;overflow-wrap:anywhere}.full{grid-column:1/-1}.band{font-size:20px;font-weight:650}label{display:block;margin:12px 0}input[type=text]{width:100%;padding:10px;border:1px solid var(--line)}details{margin-top:10px}summary{cursor:pointer}a{color:var(--blue)}#global{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:600px){main{padding:20px 14px}.card{grid-template-columns:75px 1fr;padding:14px;gap:12px}.card img{width:70px}h1{font-size:25px}}
+</style>
+<main><header><p class="meta">Gacha Mark / isolated operational handoff</p><h1>Review and sign six additional Marks</h1><p>These are new certificate identities, not republications of the existing six.</p></header>
+<section class="notice"><strong>Prepared, not issued.</strong><p>Saved Collector Crypt asks observed November 6, 2026; QR evidence is certificate-string consistency only. No authentication or live-grader verification. Source front-photo label review is not checked. Risk is unassessed; collateral eligibility is false and LTV is 0.</p><p>This page requests one transaction at a time. It cannot fund wallets, request keys, add arbitrary contracts, or write the public database. Wallet transaction fees require your approval. Keep this page open while confirming; download receipt evidence before closing.</p><p class="meta">Contract enum “REAL” means the prepared ask-dispersion tier only—not a verified physical card. Contract compCount contains retained asks, not sales.</p></section>
+<section><h2>Signing session</h2><p id="network"></p><p>Fixed registry: <code id="registry"></code></p><p>Required attester: <code id="attester"></code></p><p class="meta" id="validation"></p><button id="connect">Connect browser wallet</button><button id="switch" disabled>Switch to testnet 46630</button><button id="download">Download confirmed receipt evidence</button><p id="global" role="status">No wallet connected. No transactions sent by this page.</p><p class="meta">Use a wallet-enabled browser, preferably with this file served from localhost. An embedded chat preview may not expose your wallet. This uses the browser’s injected EIP-1193 provider; it is not a WalletConnect relay.</p></section>
+<div id="cards"></div><section><h2>After confirmation</h2><p>The receipt download contains only successfully verified chain events, their real block timestamps, and the prepared public rows. It is an indexing handoff—not a database import. Public Mark visibility remains unchanged until an authorized operator indexes those receipts.</p></section></main>
+<script>/* EMBED_ETHERS */</script>
+<script>
+'use strict';
+const BATCH=/* EMBED_BATCH */null;
+const REG='0x2A585396dd0248A060045b3f557076fB1B4Cb0eb';
+const ATTESTER='0x612548Ee6FaDd7511F271Da37b511576Efb27a1c';
+const CHAIN=46630, CHAIN_HEX='0xb626';
+const EXPECTED_CERTS=['158538600','151114672','162925956','120515467','171402573','163541653'];
+const ABI=['function publish(string,string,uint64,uint64,uint64,uint16,uint16,uint16,uint8,uint8,bool) returns(bytes32)','function exists(bytes32) view returns(bool)','function hasRole(bytes32,address) view returns(bool)','event AppraisalPublished(bytes32 indexed certKey,string grader,string certId,uint64 fmvLow,uint64 fmvPoint,uint64 fmvHigh,uint16 ltvBps,uint8 confidence,uint8 risk,bool eligible,address indexed attester)'];
+const iface=new ethers.Interface(ABI), coder=ethers.AbiCoder.defaultAbiCoder();
+let wallet=null,busy=false,sessionReady=false;
+const receipts=new Map(),pending=new Map();
+const $=s=>document.querySelector(s), text=(node,value)=>node.textContent=value;
+const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
+const report=s=>text($('#global'),s);
+function assert(v,msg){if(!v)throw Error(msg)}
+function validateBatch(){
+ assert(BATCH.chain.chain_id===CHAIN&&same(BATCH.chain.registry,REG),'Unexpected batch network or registry');
+ assert(BATCH.records.length===6,'Expected exactly six calls');
+ BATCH.records.forEach((r,i)=>{
+  const p=r.contract_proposal,t=p.unsigned_transaction,a=p.args;
+  assert(r.identity==='PSA:'+EXPECTED_CERTS[i]&&a[0]==='PSA'&&a[1]===EXPECTED_CERTS[i],'Certificate allowlist mismatch');
+  assert(t.chainId===CHAIN&&same(t.to,REG)&&same(t.required_from,ATTESTER)&&BigInt(t.value)===0n,'Transaction destination/value mismatch');
+  assert(a[2]>0&&a[2]<=a[3]&&a[3]<=a[4]&&a[5]===0&&a[9]===0&&a[10]===false,'Band or lending flags mismatch');
+  assert(iface.encodeFunctionData('publish',a)===t.data,'Calldata differs from reviewed arguments');
+  assert(ethers.keccak256(coder.encode(['string','string'],a.slice(0,2)))===p.cert_key,'Identity key mismatch');
+  assert(r.issuance.transaction_hash===null,'Batch contains prior publication');
+ });
+}
+async function guard(){
+ assert(wallet,'Connect your browser wallet first');
+ const chain=await wallet.request({method:'eth_chainId'});
+ assert(BigInt(chain)===BigInt(CHAIN),'Select Robinhood Chain testnet 46630 in your wallet');
+ const accounts=await wallet.request({method:'eth_accounts'});
+ assert(accounts.length&&same(accounts[0],ATTESTER),'Selected account is not the fixed authorized attester');
+ const roleData=iface.encodeFunctionData('hasRole',[BATCH.validation.attester_role,ATTESTER]);
+ const role=await wallet.request({method:'eth_call',params:[{to:REG,data:roleData},'latest']});
+ assert(iface.decodeFunctionResult('hasRole',role)[0],'Account no longer holds ATTESTER_ROLE');
+ const code=await wallet.request({method:'eth_getCode',params:[REG,'latest']});
+ assert(ethers.keccak256(code)===BATCH.validation.runtime_bytecode_keccak256,'Registry runtime bytecode changed');
+ return accounts[0];
+}
+function updateButtons(){document.querySelectorAll('[data-sign]').forEach(b=>{const i=Number(b.dataset.sign);b.disabled=!sessionReady||busy||receipts.has(i)||pending.has(i)});$('#switch').disabled=!wallet||busy;$('#connect').disabled=busy}
+async function connect(){try{
+ assert(window.ethereum,'No injected wallet. Open this file in a wallet-enabled browser outside the embedded preview.');wallet=window.ethereum;
+ await wallet.request({method:'eth_requestAccounts'});
+ if(wallet.on&&!wallet.__markListeners){wallet.on('accountsChanged',()=>{sessionReady=false;updateButtons();report('Account changed. Reconnect to revalidate the fixed attester.');});wallet.on('chainChanged',()=>{sessionReady=false;updateButtons();report('Network changed. Reconnect to revalidate testnet 46630.');});wallet.__markListeners=true;}
+ await guard();sessionReady=true;report('Authorized attester connected on testnet 46630. Review and sign each card individually.');
+ }catch(e){sessionReady=false;report(e.shortMessage||e.message)}updateButtons()}
+function verifyTransaction(r,tx){const expected=r.contract_proposal.unsigned_transaction;assert(tx&&same(tx.to,REG)&&same(tx.from,ATTESTER),'Receipt transaction sender/destination mismatch');assert(BigInt(tx.value)===0n&&same(tx.input||tx.data,expected.data),'Receipt transaction does not match prepared calldata');if(tx.chainId)assert(BigInt(tx.chainId)===BigInt(CHAIN),'Receipt transaction chain mismatch')}
+function verifyEvent(r,receipt){
+ assert(receipt&&BigInt(receipt.status)===1n,'Transaction reverted or has no successful receipt');
+ const matches=[];for(const log of receipt.logs||[]){if(!same(log.address,REG))continue;try{const e=iface.parseLog(log);if(e&&e.name==='AppraisalPublished'&&e.args.certKey===r.contract_proposal.cert_key)matches.push({e,log})}catch{}}
+ assert(matches.length===1,'Expected exactly one matching registry publication event');const {e,log}=matches[0],a=r.contract_proposal.args;
+ assert(e.args.grader===a[0]&&e.args.certId===a[1]&&same(e.args.attester,ATTESTER),'Publication identity or attester mismatch');
+ ['fmvLow','fmvPoint','fmvHigh','ltvBps'].forEach((k,i)=>assert(e.args[k]===BigInt(a[i+2]),'Publication '+k+' mismatch'));
+ assert(Number(e.args.confidence)===a[8]&&Number(e.args.risk)===a[9]&&e.args.eligible===false,'Publication risk/confidence flags mismatch');return log;
+}
+async function confirmReceipt(i,hash){
+ const r=BATCH.records[i],state=$('#state-'+i);assert(/^0x[0-9a-fA-F]{64}$/.test(hash),'Enter a real transaction hash');await guard();
+ const receipt=await wallet.request({method:'eth_getTransactionReceipt',params:[hash]});
+ if(!receipt){text(state,'Transaction pending or not found on testnet. Use Verify receipt again.');return}
+ assert(same(receipt.transactionHash,hash)&&same(receipt.to,REG)&&same(receipt.from,ATTESTER),'Receipt identity mismatch');
+ const tx=await wallet.request({method:'eth_getTransactionByHash',params:[hash]});verifyTransaction(r,tx);const log=verifyEvent(r,receipt);
+ const block=await wallet.request({method:'eth_getBlockByNumber',params:[receipt.blockNumber,false]});assert(block&&same(block.hash,receipt.blockHash),'Receipt block is no longer canonical');
+ const timestamp=new Date(Number(BigInt(block.timestamp))*1000).toISOString();
+ const event={grader:'PSA',cert:r.public_row_after_issuance.cert,published_at:timestamp,low_usd:r.public_row_after_issuance.low_usd,point_usd:r.public_row_after_issuance.point_usd,high_usd:r.public_row_after_issuance.high_usd,chain_id:CHAIN,registry:REG,tx:hash,explorer:BATCH.chain.explorer};
+ receipts.set(i,{identity:r.identity,mark_event:event,public_row:r.public_row_after_issuance,receipt,transaction:tx,block_hash:block.hash,log_index:log.logIndex,verified_at:new Date().toISOString(),pricing_observed_at:r.source.pricing_observed_at,evidence_sha256:r.evidence_sha256});pending.delete(i);
+ text(state,'Confirmed on-chain (one receipt; not a finality guarantee).\n'+timestamp+'\n'+hash+'\nPublic index: not updated.');updateButtons();report(receipts.size+' of 6 receipts verified. Download the confirmed receipt evidence before closing.');
+}
+async function signOne(i){if(busy)return;busy=true;updateButtons();const r=BATCH.records[i],state=$('#state-'+i);try{
+ assert($('#review-'+i).checked,'Confirm review for this card before signing');assert(!receipts.has(i)&&!pending.has(i),'Already confirmed or pending');await guard();
+ const existsData=iface.encodeFunctionData('exists',[r.contract_proposal.cert_key]);const exists=await wallet.request({method:'eth_call',params:[{to:REG,data:existsData},'latest']});assert(!iface.decodeFunctionResult('exists',exists)[0],'Certificate already exists. Do not republish; verify its real receipt instead.');
+ const tx={from:ATTESTER,to:REG,data:r.contract_proposal.unsigned_transaction.data,value:'0x0',chainId:CHAIN_HEX};
+ text(state,'Checking current call and gas estimate…');const result=await wallet.request({method:'eth_call',params:[{from:tx.from,to:tx.to,data:tx.data,value:tx.value},'latest']});assert(iface.decodeFunctionResult('publish',result)[0]===r.contract_proposal.cert_key,'Current simulation returned another identity');
+ const gas=await wallet.request({method:'eth_estimateGas',params:[{from:tx.from,to:tx.to,data:tx.data,value:tx.value}]});
+ assert(window.confirm(r.public_row_after_issuance.card_name+' / '+r.identity+'\nRobinhood testnet 46630\nCurrent estimate: '+BigInt(gas)+' gas\nNo value transfer; wallet fees still apply.\nApprove opening this ONE wallet transaction?'),'User cancelled');
+ await guard();text(state,'Review this transaction in your wallet. No other calls will be requested.');const hash=await wallet.request({method:'eth_sendTransaction',params:[tx]});assert(/^0x[0-9a-fA-F]{64}$/.test(hash),'Wallet did not return a transaction hash');pending.set(i,hash);$('#hash-'+i).value=hash;text(state,'Submitted, not yet confirmed.\n'+hash+'\nUse Verify receipt once mined.');await confirmReceipt(i,hash);
+ }catch(e){text(state,(pending.has(i)?'Submitted transaction remains pending. ':'Not confirmed. ')+(e.shortMessage||e.message))}finally{busy=false;updateButtons()}}
+function download(){const value={network:'Robinhood Chain testnet',chain_id:CHAIN,registry:REG,verified_receipt_count:receipts.size,public_index_updated:false,records:[...receipts.values()]};const blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='additional-mark-confirmed-receipts.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function render(){
+ text($('#network'),'Robinhood Chain testnet · chain ID '+CHAIN);text($('#registry'),REG);text($('#attester'),ATTESTER);text($('#validation'),'Prepared call validation: '+BATCH.validation.checked_at+'. The wallet rechecks permissions, code, absence and simulation before each signature.');
+ BATCH.records.forEach((r,i)=>{const c=r.public_row_after_issuance,el=document.createElement('article');el.className='card';el.innerHTML='<img alt="Saved source card photo"><div><h2></h2><p class="meta identity"></p><p class="meta set"></p><p class="band"></p><p class="meta evidence"></p></div><div class="full"><details><summary>Review exact prepared call and source evidence</summary><pre></pre></details><label><input type="checkbox" id="review-'+i+'"> I reviewed this specific card, saved ask basis, testnet, zero LTV and no authentication claim.</label><button data-sign="'+i+'" disabled>Review and sign this Mark</button><label>Existing or submitted transaction hash<input type="text" id="hash-'+i+'" placeholder="0x…" autocomplete="off" spellcheck="false"></label><button class="verify">Verify receipt</button><div class="state" id="state-'+i+'" role="status">Prepared — not issued by this page.</div></div>';
+  el.querySelector('img').src='data:image/'+(r.front_image.format==='JPEG'?'jpeg':r.front_image.format.toLowerCase())+';base64,'+r.front_image.base64;text(el.querySelector('h2'),c.card_name);text(el.querySelector('.identity'),r.identity+' · '+c.grade+' · #'+c.card_no);text(el.querySelector('.set'),c.set_name);text(el.querySelector('.band'),'$'+c.low_usd.toFixed(2)+' / $'+c.point_usd.toFixed(2)+' / $'+c.high_usd.toFixed(2));text(el.querySelector('.evidence'),c.prices_used+' retained asks · source '+r.source.pricing_observed_at+' · saved QR cert match');
+  text(el.querySelector('pre'),JSON.stringify({network:BATCH.chain,source:r.source,checks:r.checks,proposal:r.contract_proposal,qr:r.slab_qr_evidence.comparison,source_image:r.front_image.source_url},null,2));el.querySelector('[data-sign]').onclick=()=>signOne(i);el.querySelector('.verify').onclick=async()=>{try{assert(!busy,'Another operation is active');busy=true;updateButtons();await confirmReceipt(i,$('#hash-'+i).value.trim())}catch(e){text($('#state-'+i),'Not confirmed. '+(e.shortMessage||e.message))}finally{busy=false;updateButtons()}};$('#cards').appendChild(el);
+ });
+ $('#connect').onclick=connect;$('#switch').onclick=async()=>{try{await wallet.request({method:'wallet_switchEthereumChain',params:[{chainId:CHAIN_HEX}]});await connect()}catch(e){report('Select the existing testnet 46630 network in your wallet. '+(e.shortMessage||e.message))}};$('#download').onclick=download;
+}
+try{validateBatch();render()}catch(e){report('Signing disabled: '+e.message);$('#connect').disabled=true}
+</script></html>

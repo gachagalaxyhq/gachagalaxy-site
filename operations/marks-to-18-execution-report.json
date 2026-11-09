@@ -1,0 +1,75 @@
+{
+  "actual_total_marks": 18,
+  "new_issued": 6,
+  "old_twelve_preserved": true,
+  "new_decoded_literal_qr_matches": 6,
+  "valid_saved_slab_images": 6,
+  "front_label_visual_matches": 6,
+  "chain_id": 46630,
+  "registry": "0x2A585396dd0248A060045b3f557076fB1B4Cb0eb",
+  "attester": "0x612548Ee6FaDd7511F271Da37b511576Efb27a1c",
+  "transactions": [
+    {
+      "identity": "PSA:136213011",
+      "tx": "0x229ec760e51810c4cbe8c3eb014c2d70b4a165a5be5b22857c6e53e545c31c77",
+      "block": 150110812,
+      "published_at": "2026-11-07T18:38:18.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:140506564",
+      "tx": "0x0e75813d57f20fb489e9e1245c94a1e3787057a052bdb1374d5aaa4d53e5afdb",
+      "block": 150110836,
+      "published_at": "2026-11-07T18:38:22.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:152219900",
+      "tx": "0x29d57bd0c44426566caac4f62a8817543a8648b5109e253abe69cb8d736f9ddd",
+      "block": 150110857,
+      "published_at": "2026-11-07T18:38:27.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:167034492",
+      "tx": "0xc35fae7bb1e1e08cf0bf51761a2f681fd5a04a674f5071201b83d09e47eaae97",
+      "block": 150110877,
+      "published_at": "2026-11-07T18:38:31.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:153059587",
+      "tx": "0xcbd138e433c57ae7bd5c788c0ee9015e0efae7a970e71be6b5795f280dc10ea7",
+      "block": 150110899,
+      "published_at": "2026-11-07T18:38:36.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:110153218",
+      "tx": "0x8f4f9c299ab1c9d4b65117b0eb6638343cfecf527e041f1db4f03286188a9706",
+      "block": 150110923,
+      "published_at": "2026-11-07T18:38:41.000Z",
+      "status": "confirmed"
+    }
+  ],
+  "actual_fee_wei": "6055860000000",
+  "shared_ui_changed": false,
+  "deployed": false,
+  "database_written": false,
+  "committed": false,
+  "pushed": false,
+  "existing_updated": [
+    "src/certs.json",
+    "src/onchain.json"
+  ],
+  "evidence_and_receipts": [
+    "data/marks-to-18-preparation.json",
+    "operations/marks-to-18-receipts.json",
+    "operations/marks-to-18-preflight.json",
+    "operations/marks-to-18-publication-ready.json",
+    "operations/pre-18-certs.json",
+    "operations/pre-18-onchain.json"
+  ],
+  "parent_next_step": "Prepare/render/deploy existing updated source indexes and decoded-only catalogue through parent. No public files or routing changed by issuance executor.",
+  "disclosure": "Robinhood Chain testnet (46630). Saved Collector Crypt marketplace asks observed 2026-11-06T06:57:12Z; not live prices or comparable sales. Slab QR certificate comparison only, not authentication. Ownership and custody not checked. Collateral eligibility not assessed; eligible=false and LTV=0."
+}

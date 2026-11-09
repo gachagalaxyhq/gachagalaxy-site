@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Clean Check — cert claim lookup | Gacha Galaxy</title>
-<meta name="description" content="Look up a graded card cert and see every claim on it: Gacha Marks and live Collector Crypt listings. Built to catch one cert sold or listed twice.">
+<title>Clean Check — free basic evidence check | Gacha Galaxy</title>
+<meta name="description" content="Free basic checks of saved certificate evidence. Gacha Mark requests are accepted separately; new requests are not complimentary and payments are inactive.">
 <style>
   :root{
     --bg:#0b0d12;--panel:#12151d;--panel2:#171b25;--line:#242a38;--ink:#eef1f7;--dim:#9aa4b8;--faint:#6b7488;
@@ -23,6 +23,7 @@
   h1{font-size:clamp(28px,4.4vw,40px);line-height:1.12;letter-spacing:-.02em;margin:0 0 12px;font-weight:680}
   .lede{color:var(--dim);font-size:17px;margin:0 0 28px;max-width:62ch}
   form.lookup{display:flex;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+  .field{display:flex;flex-direction:column;gap:5px;flex:1 1 220px;min-width:0}.field label{font-size:13px;color:var(--dim);font-weight:600}.lookup .field input,.lookup .field select{flex:none;width:100%}.lookup button{align-self:flex-end}
   input[type=text],select{
     background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:11px;
     padding:14px 15px;font-size:16px;font-family:inherit;outline:none
@@ -68,86 +69,119 @@
     header.top{margin-bottom:32px}
     nav a{margin-left:12px;font-size:13px}
     form.lookup{flex-direction:column}
+    .field{flex:none;width:100%}
     input[type=text],select,button{width:100%;flex:1 1 auto}
     .cov{gap:16px}
   }
+  :root{--bg:#f6f5f9;--panel:#fff;--panel2:#fcfbfd;--line:#e5deec;--ink:#20172c;--dim:#6a6074;--faint:#756b7e;--accent:#7a22c9;--ok:#167451;--warn:#976200;--bad:#b42338}
+  .wrap{max-width:1160px;padding:0 28px 48px}
+  header.top{min-height:88px;border-bottom:1px solid #e5e0eb;gap:24px;padding:20px 0;margin-bottom:0;flex-wrap:wrap}
+  .brand{color:#261634;font-size:16px;letter-spacing:-.4px;white-space:nowrap}.dot{display:grid;place-items:center;width:32px;height:36px;border-radius:9px;background:#782ac1;box-shadow:none;color:white;font-size:19px}.dot::before{content:'G'}
+  header nav{display:flex;flex-wrap:wrap;gap:5px;margin-left:auto;align-items:center}header nav a{margin:0;padding:8px 9px;border-radius:8px;color:#62596c;font-size:13px}header nav a[aria-current]{background:#eee5f8;color:#6e20ad;font-weight:700}
+  .check-workspace{max-width:840px;margin:52px auto 0;padding:38px 40px 30px;border-radius:20px;border:1px solid var(--line);box-shadow:0 8px 32px #28113905;background:#fff}
+  .tool-label{margin:0 0 14px;color:#7943a2;font-size:11px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}
+  h1{font-size:40px;font-weight:700;letter-spacing:-1.4px;line-height:1.1;margin:0 0 14px}.lede{font-size:16px;line-height:1.65;max-width:58ch;margin-bottom:28px}
+  form.lookup{display:grid;grid-template-columns:minmax(0,1fr) 145px auto;gap:12px;margin-bottom:13px}.lookup .field{min-width:0}.field label{color:#51465d;font-size:12px;margin-bottom:3px}.lookup input,.lookup select{height:54px;border:1px solid #dcd5e5;border-radius:9px;background:#fcfbfd;padding:14px}.lookup button{height:54px;border-radius:9px;padding:0 24px;font-size:14px}.check-workspace .hint{font-size:12px;margin:0}
+  .tool-links{display:flex;gap:12px 24px;justify-content:space-between;flex-wrap:wrap;margin-top:26px;padding-top:19px;border-top:1px solid var(--line);font-size:13px}.tool-links a{color:var(--accent);text-decoration:none;font-weight:550}
+  #out,.service-details,footer{max-width:840px;margin-left:auto;margin-right:auto}#out.on{margin-top:26px}.service-details{border:1px solid var(--line);border-radius:13px;margin-top:24px;padding:20px 24px;font-size:14px;color:#554362}.service-details summary{cursor:pointer;font-weight:650}.service-details p{color:var(--dim)}.cov{display:none}footer{margin-top:52px;font-size:12px;line-height:1.7;color:#7c7384}.pill.ours{color:#6e20ad;background:#f2ebfa;border-color:#dbc9ed}.pill.cc{color:#176846;background:#eff9f4;border-color:#c8e6d5}
+  .search-context{margin:0 0 22px;padding:14px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;font-size:14px;overflow-wrap:anywhere}.search-context[hidden]{display:none}.search-context p{margin:5px 0 0;color:var(--dim);font-size:12px}.evidence-status{padding-left:20px;font-size:14px;color:var(--dim)}.evidence-status li{margin:7px 0}.result-action{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;padding:12px 18px;border-radius:9px;font-weight:650}.claim{overflow-wrap:anywhere}.result summary{cursor:pointer}
+  @media(max-width:900px){header nav{margin-left:0}.brand{width:100%}header.top{gap:12px}.check-workspace{margin-top:28px}}
+  @media(max-width:560px){.wrap{padding:0 18px 36px}header.top{padding:18px 0 16px}header nav{gap:3px}header nav a{font-size:12px;padding:7px 8px}.check-workspace{padding:26px 22px 22px;margin-top:26px;border-radius:16px}h1{font-size:32px}.lede{font-size:15px;margin-bottom:22px}form.lookup{grid-template-columns:minmax(0,1fr) 110px}.lookup .field:first-child{grid-column:1/-1}.lookup button{width:100%;padding:0 12px}.service-details{padding:18px;margin-top:20px}footer{margin-top:34px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <a class="brand" href="/"><span class="dot"></span>Gacha Galaxy</a>
-    <nav><a href="/check">Price check</a><a href="/platform#/certified">Marks</a></nav>
+    <nav aria-label="Sections"><a href="/platform?saved=1#/cards">Browse cards</a><a href="/platform?saved=1#/certified">Gacha Marks</a><a href="/check">Price Check</a><a href="/cleancheck" aria-current="page">Clean Check</a><a href="/platform?saved=1#/scanner">Price gaps</a><a href="/platform?saved=1#/collection">My Collection</a><a href="/platform?saved=1#/api">Public data</a></nav>
   </header>
 
-  <h1>Clean Check</h1>
-  <p class="lede">Enter a graded card cert number. We show every claim we hold on it — our Gacha Marks and live Collector Crypt listings — and flag the cases that need a human look.</p>
+  <section class="check-workspace" aria-labelledby="check-title">
+  <p class="tool-label">Card research · certificate evidence</p>
+  <h1 id="check-title">Clean Check</h1>
+  <p class="lede">Enter a PSA or CGC certificate number to find matching listings and Gacha Mark records. Free, no sign-up.</p>
+  <div id="search-context" class="search-context" hidden><b>Card context from Price Check</b><div id="context-identity"></div><p>Search context only, not verified certificate identity. Enter the certificate printed on your slab; no certificate has been selected for you.</p></div>
 
   <form class="lookup" id="f" autocomplete="off">
-    <input type="text" id="cert" inputmode="numeric" placeholder="Cert number, e.g. 109308847" aria-label="Cert number">
-    <select id="grader" aria-label="Grader">
+    <div class="field"><label for="cert">Certificate number</label><input type="text" id="cert" inputmode="numeric" maxlength="64" placeholder="e.g. 109308847" aria-label="Cert number"></div>
+    <div class="field"><label for="grader">Grader</label><select id="grader" aria-label="Grader">
       <option value="">Any grader</option>
       <option value="PSA">PSA</option>
       <option value="CGC">CGC</option>
-    </select>
+    </select></div>
     <button type="submit" id="go">Check</button>
   </form>
-  <p class="hint">Numbers only. Dashes and spaces are fine.</p>
+  <p class="hint">Saved evidence only—not a live grader check or physical authentication. PSA: 6–10 digits; CGC: 6–13.</p>
+  <div class="tool-links"><a href="/platform?saved=1#/cards">Browse card listings →</a><a href="/check">Research sold prices →</a></div>
+  </section>
 
-  <div class="result" id="out"></div>
+  <div class="result" id="out" aria-live="polite"></div>
+  <details class="service-details"><summary>Need a Gacha Mark evidence review?</summary><p>Requests are separate from this free lookup. New requests are not complimentary. Payments are inactive; submitting a request is not a paid order or an issued Mark.</p><a href="/check#request">Request an evidence review →</a> · <a href="/certificate">Service details →</a></details>
 
   <div class="cov">
-    <div><b id="ncc">—</b><span>live listings indexed</span></div>
+    <div><b id="ncc">—</b><span>listings in saved index</span></div>
     <div><b id="nown">—</b><span>claims in our records</span></div>
-    <div><b>2</b><span>sources compared</span></div>
+    <div><b>2</b><span>indexed sources · availability shown per check</span></div>
   </div>
 
   <footer>
-    Covers Collector Crypt listings and Gacha Galaxy records only — not every marketplace. A flag means “check this by hand”, never a verdict on a slab.
-    <br><a href="/check">Free price check</a> · <a href="/platform#/certified">Gacha Mark register</a>
+    Covers the saved sources detailed with each result, not every marketplace. A flag means “check this by hand”, never a verdict on a slab.
+    <br><a href="/check">Price Check · free sold-price lookup</a> · <a href="/platform#/certified">Gacha Mark register</a>
   </footer>
 </div>
 
 <script>
 (function(){
-  var OWN=[],OWNLOAD=false,CCCOUNT=0;
+  var OWN=[],OWNLOAD=false,lookupSeq=0;
   var f=document.getElementById('f'),certEl=document.getElementById('cert'),graderEl=document.getElementById('grader'),
       out=document.getElementById('out'),go=document.getElementById('go');
 
-  function norm(s){var d=String(s==null?'':s).replace(/\D/g,'');return d.replace(/^0+(?=\d)/,'')}
+  function norm(s){if(typeof s!=='string'||!/^[\d\s-]+$/.test(s))return '';var d=s.replace(/[\s-]/g,'');return d.replace(/^0+(?=\d)/,'')}
+  function grader(s){return String(s||'PSA').trim().toUpperCase()}
+  function validCert(cert,g){return (g==='PSA'?/^[1-9]\d{5,9}$/:g==='CGC'||!g?/^[1-9]\d{5,12}$/:/a^/).test(cert)}
+  function validRows(rows){return Array.isArray(rows)&&rows.every(function(c){return c&&typeof c==='object'&&!Array.isArray(c)&&
+    (c.cert==null||typeof c.cert==='string')&&(c.cert==null||c.cert===''||validCert(norm(c.cert),grader(c.grader)))&&
+    (c.grader==null||typeof c.grader==='string')&&
+    (!norm(c.cert)||['PSA','CGC'].includes(String(c.grader||'').trim().toUpperCase()))})}
   function gradeNum(s){var m=String(s==null?'':s).match(/\d+(\.\d)?/);return m?Number(m[0]):null}
   function card(s){return String(s==null?'':s).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function money(v){if(v==null)return '—';return '$'+Number(v).toLocaleString('en-US',{maximumFractionDigits:0})}
   function dshort(s){return s?String(s).slice(0,10):''}
+  var params=new URLSearchParams(location.search),context=new URLSearchParams();
+  ['name','set','number','grade'].forEach(function(key){var value=(params.get(key)||'').trim().slice(0,300);if(value)context.set(key,value)});
+  if(context.size){
+    document.getElementById('search-context').hidden=false;
+    document.getElementById('context-identity').textContent=['name','set','number','grade'].map(function(key){var value=context.get(key);return value?(key==='number'?'#':'')+value:''}).filter(Boolean).join(' · ');
+  }
 
   function loadOwn(){
     if(OWNLOAD)return Promise.resolve(OWN);
-    return fetch('/data/own-claims.json').then(function(r){return r.ok?r.json():[]}).then(function(d){
-      OWN=d||[];OWNLOAD=true;document.getElementById('nown').textContent=OWN.length;return OWN;
-    }).catch(function(){OWN=[];OWNLOAD=true;return OWN});
+    return fetch('/data/own-claims.json').then(function(r){if(!r.ok)throw new Error('records unavailable');return r.json()}).then(function(d){
+      if(!validRows(d))throw new Error('invalid records');
+      OWN=d;OWNLOAD=true;document.getElementById('nown').textContent=OWN.filter(function(c){return norm(c.cert)}).length;return OWN;
+    });
   }
 
   function loadShard(cert){
     var pre=cert.slice(0,3);
     return fetch('/data/cc/'+pre+'.json').then(function(r){
-      if(r.status===404)return [];
       if(!r.ok)throw new Error('lookup failed ('+r.status+')');
       return r.json();
-    }).catch(function(){return []});
+    }).then(function(d){if(!validRows(d))throw new Error('invalid listing data');return d});
   }
 
   function check(claims){
     var flags=[],by={};
     claims.forEach(function(c){
-      var k=(c.grader||'PSA')+'/'+c.cert;
+      var k=grader(c.grader)+'/'+c.cert;
       (by[k]=by[k]||[]).push(c);
     });
     Object.keys(by).forEach(function(k){
       var list=by[k];
       var owners={},cards={},grades={};
       list.forEach(function(x){
-        if(x.owner)owners[String(x.owner)]=1;
+        if(x.owner&&x.source!=='mark'&&x.source!=='request')owners[String(x.owner)]=1;
         var cd=card(x.card);if(cd)cards[cd]=1;
         var g=gradeNum(x.grade);if(g!==null)grades[g]=1;
       });
@@ -158,87 +192,114 @@
     return flags;
   }
 
-  function render(cert,ccRows,ownRows){
+  function render(cert,ccRows,ownRows,status,g){
     var claims=[];
     ownRows.forEach(function(c){claims.push({source:c.source==='mark'?'mark':c.source==='collection'?'collection':'request',
-      grader:(c.grader||'PSA').toUpperCase(),cert:cert,owner:c.owner,card:c.card,grade:c.grade,when:c.when})});
-    ccRows.forEach(function(c){claims.push({source:'cc',grader:c.grader,cert:cert,owner:'Collector Crypt: '+(c.nft||'nft'),
+      grader:grader(c.grader),cert:cert,owner:c.owner,card:c.card,grade:c.grade,when:c.when})});
+    ccRows.forEach(function(c){claims.push({source:'cc',grader:grader(c.grader),cert:cert,owner:'Collector Crypt: '+(c.nft||'nft'),
       card:c.name,grade:c.grade,ask:c.ask,when:c.listed,status:c.status})});
 
     var flags=check(claims);
-    var v='none',title='No claims on this cert',sub='Nothing in our marks or in the Collector Crypt listings we index. That is not a clean bill of health — only that these two sources are silent.';
+    var v='none',title='No indexed claims found',sub='No matching record in the sources checked. This does not establish authenticity or absence of other listings.';
     if(flags.length){
       v='flag';
       var f0=flags[0];
-      if(f0.kind==='multi_owner'){title='Two different owners on one cert';sub='The same cert is claimed by more than one party. Treat as a duplicate until confirmed by hand.'}
-      else{title='Cert recorded with conflicting details';sub='Same cert number, different '+(f0.field==='card'?'card name':'grade')+'. Usually a typo or a relabel — check the slab.'}
+      if(f0.kind==='multi_owner'){title='Multiple claims need review';sub='Different source identifiers appear on this cert. They do not establish different physical owners; compare the source records by hand.'}
+      else{title='Cert recorded with conflicting details';sub='Same cert number, different '+(f0.field==='card'?'card name':'grade')+'. Check the source records by hand; the cause is not established.'}
     } else if(claims.length===1&&ccRows.length===1){
-      v='clear';title='Listed, and nothing contradicts it';
-      sub='This cert is listed on Collector Crypt and no other source in our index claims it. Single claim, single owner.';
+      title='Matching saved listing found';
+      sub='One matching saved listing. Current availability and physical ownership have not been checked.';
     } else if(ccRows.length===1){
-      v='clear';title='Listed on Collector Crypt';sub='One live listing, no competing claim in our records.';
+      title='Matching saved listing found';sub='One matching saved listing, plus Gacha Galaxy records. This is not a live availability check.';
+    } else if(ccRows.length>1){
+      title='Matching saved listings found';sub='Multiple matching saved listings. These do not establish current availability or distinct physical owners.';
     } else if(ownRows.length){
-      v='clear';title='Claimed in our records';sub='We hold a Gacha Mark or collection entry for this cert, and nothing contradicts it.';
+      title='Gacha Galaxy record found';sub='A matching saved record is present. A Mark record is not a separate owner claim or proof of physical authenticity.';
     }
+    if(status.own!=='checked'||status.cc!=='checked'){v=flags.length?'flag':'none';title='Incomplete source check';sub='At least one source could not be checked. Available records are shown below; no all-clear result is implied.'}
 
     var h='';
     h+='<div class="verdict '+v+'"><p class="vtitle">'+esc(title)+'</p><p class="vsub">'+esc(sub)+'</p></div>';
+    var marks=ownRows.filter(function(c){return c.source==='mark'});
+    function found(state,rows){return state!=='checked'?'not_checked — source unavailable':rows.length?'found — '+rows.length+' saved record'+(rows.length===1?'':'s'):'not_found — no match in checked saved source'}
+    h+='<h2>Evidence coverage</h2><ul class="evidence-status"><li>Saved listing: '+found(status.cc,ccRows)+'</li><li>Gacha Mark: '+found(status.own,marks)+'</li><li>Grader lookup: not_checked — no live lookup ran</li><li>QR-to-cert comparison: not_checked — no QR was compared</li><li>Private cross-platform matching: not_checked — planned, not live</li><li>Physical authenticity: not_checked</li></ul>';
+    h+='<details class="claim"><summary>Sources and limits</summary><div class="meta">Gacha Galaxy saved records: '+(status.own==='checked'?'checked':'unavailable')+'<br>Collector Crypt saved shard: '+(status.cc==='checked'?'checked':'unavailable')+'</div><p class="vsub">Only matching grader and certificate records from successfully loaded saved sources are shown. Unavailable sources are not_checked, not empty results. A QR match compares a QR target with a certificate number. It is separate from a grader record check and cannot authenticate a physical slab. No live QR, grader, private cross-platform or Horizen call is performed here.</p></details>';
 
-    h+='<h2>Claims found ('+claims.length+')</h2>';
+    h+='<h2>Matching records ('+claims.length+')</h2>';
     if(!claims.length){
-      h+='<div class="empty">No claim for cert '+esc(cert)+' in either source.</div>';
+      h+='<div class="empty">No matching record for cert '+esc(cert)+' in the sources successfully checked.</div>';
     } else {
       claims.forEach(function(c){
-        var pill=c.source==='cc'?'<span class="pill cc">Collector Crypt</span>':
+        var pill=c.source==='cc'?'<span class="pill cc">Saved listing</span>':
                  c.source==='mark'?'<span class="pill ours">Gacha Mark</span>':
                  c.source==='collection'?'<span class="pill ours">Collection</span>':'<span class="pill">Request</span>';
         var meta=[];
+        meta.push(esc(c.grader==='PSA'?'PSA cert ref':c.grader+' cert ref')+' '+esc(cert));
         if(c.grade)meta.push('Grade '+esc(c.grade));
         if(c.ask!=null)meta.push('Asking '+money(c.ask));
-        if(c.status)meta.push(esc(c.status));
-        if(c.when)meta.push('Listed '+esc(dshort(c.when)));
+        if(c.status)meta.push('Source status: '+esc(c.status)+' (not an authenticity verdict)');
+        if(c.source==='cc'&&c.when)meta.push('Source date '+esc(dshort(c.when)));
         if(c.source!=='cc'&&c.when)meta.push('On record '+esc(dshort(c.when)));
         h+='<div class="claim"><div class="row1"><span class="card">'+esc(c.card||'Unknown card')+'</span>'+pill+'</div>'
           +'<div class="meta">'+meta.join(' · ')+'</div>'
-          +'<div class="meta" style="color:var(--faint);font-size:12.5px">'+esc(c.owner||'')+'</div></div>';
+          +'<details class="meta"><summary>Record source</summary>'+esc(c.source==='cc'?'Collector Crypt saved shard':'Gacha Galaxy saved records')+'<br>'+esc(c.owner||'')+'</details></div>';
       });
     }
 
     if(flags.length>1){
       h+='<h2>All flags</h2>';
       flags.forEach(function(f){
-        h+='<div class="claim"><div class="meta">'+esc(f.kind==='multi_owner'?'Multiple owners: '+f.owners.join(', '):'Conflicting '+f.field+': '+f.values.join(' / '))+'</div></div>';
+        h+='<div class="claim"><div class="meta">'+esc(f.kind==='multi_owner'?'Source identifiers needing review: '+f.owners.join(', '):'Conflicting '+f.field+': '+f.values.join(' / '))+'</div></div>';
       });
     }
+    var graders=Array.from(new Set(claims.map(function(c){return c.grader}).filter(Boolean)));
+    var requestGrader=g||(graders.length===1?graders[0]:'');
+    marks.forEach(function(c){
+      // The current single-cert Mark detail route supports PSA only. Never route a CGC record to a same-digit PSA Mark.
+      var markHref=grader(c.grader)==='PSA'?'/platform?saved=1#/cert/'+encodeURIComponent(cert):'/platform?saved=1#/certified';
+      h+='<p><a class="result-action" href="'+markHref+'">View existing Gacha Mark'+(grader(c.grader)==='PSA'?'':' in register')+' →</a></p><p class="hint">'+esc(grader(c.grader))+' saved Mark record'+(c.when?' · on record '+esc(dshort(c.when)):' · record date unavailable')+'. Review its recorded checks, price basis and publication date; this lookup does not refresh the Mark.</p>';
+    });
+    ccRows.forEach(function(c){h+='<p><a href="/platform?saved=1#/listing/'+encodeURIComponent(grader(c.grader))+'/'+encodeURIComponent(cert)+'">Open saved listing / pricing evidence →</a></p>'});
+
+    if(requestGrader){
+      if(!marks.length)h+='<p><a href="/check?cert='+encodeURIComponent(cert)+'&amp;grader='+encodeURIComponent(requestGrader)+'#request">Request a Gacha Mark evidence review →</a></p><p class="hint">'+(status.own==='checked'?'No saved Gacha Mark found.':'Mark source not_checked; an existing Mark may still be present.')+' Requests use 6–10-digit PSA or CGC numbers only. New requests are not complimentary; payments are inactive. This lookup has not submitted a request or issued a Mark.</p>';
+      h+='<p><a href="/platform?saved=1#/passport/'+encodeURIComponent(requestGrader)+'/'+encodeURIComponent(cert)+'">Open Card Passport →</a></p><p class="hint">Passport shares available saved card details and evidence; it does not issue a token or another certification.</p>';
+    }else h+='<p class="hint">Choose a grader to open a card-specific request or Passport link.</p>';
     out.innerHTML=h;out.className='result on';
-    try{history.replaceState(null,'','?cert='+encodeURIComponent(cert))}catch(e){}
+    try{var next=new URLSearchParams(context);next.set('cert',cert);next.set('grader',g);history.replaceState(null,'','?'+next.toString())}catch(e){}
   }
 
   function run(){
-    var cert=norm(certEl.value),g=graderEl.value;
-    if(!cert){certEl.focus();return}
+    var my=++lookupSeq,cert=norm(certEl.value),g=graderEl.value;
+    if(!validCert(cert,g)){go.disabled=false;go.textContent='Check';out.className='result on';out.textContent=g==='PSA'?'Enter a PSA cert number with 6–10 digits.':'Enter a cert number: PSA 6–10 digits or CGC 6–13 digits.';certEl.focus();return}
     go.disabled=true;go.textContent='Checking…';
-    Promise.all([loadOwn(),loadShard(cert)]).then(function(res){
-      var ownAll=res[0],shard=res[1]||[];
+    out.className='result on';out.textContent='Loading saved source records…';
+    Promise.allSettled([loadOwn(),loadShard(cert)]).then(function(res){
+      if(my!==lookupSeq)return;
+      var ownAll=res[0].status==='fulfilled'?res[0].value:[],shard=res[1].status==='fulfilled'?res[1].value:[];
       var ownRows=ownAll.filter(function(c){
         if(norm(c.cert)!==cert)return false;
-        return !g||String(c.grader||'PSA').toUpperCase()===g;
+        return validCert(cert,grader(c.grader))&&(!g||grader(c.grader)===g);
       });
       var ccRows=shard.filter(function(c){
-        if(c.cert!==cert)return false;
-        return !g||c.grader===g;
+        if(norm(c.cert)!==cert)return false;
+        return validCert(cert,grader(c.grader))&&(!g||grader(c.grader)===g);
       });
-      render(cert,ccRows,ownRows);
+      render(cert,ccRows,ownRows,{own:res[0].status==='fulfilled'?'checked':'not_checked',cc:res[1].status==='fulfilled'?'checked':'not_checked'},g);
     }).catch(function(e){
+      if(my!==lookupSeq)return;
       out.className='result on';
       out.innerHTML='<div class="verdict flag"><p class="vtitle">Could not run the check</p><p class="vsub">'+esc(e.message||'lookup failed')+'</p></div>';
     }).then(function(){
-      go.disabled=false;go.textContent='Check';
+      if(my===lookupSeq){go.disabled=false;go.textContent='Check'}
     });
   }
 
   f.addEventListener('submit',function(e){e.preventDefault();run()});
+  function resetContext(){lookupSeq++;out.innerHTML='';out.textContent='';out.className='result';go.disabled=false;go.textContent='Check'}
+  certEl.addEventListener('input',resetContext);graderEl.addEventListener('change',resetContext);
   var q=new URLSearchParams(location.search).get('cert');
+  var gr=(new URLSearchParams(location.search).get('grader')||'').trim().toUpperCase();if(gr==='PSA'||gr==='CGC')graderEl.value=gr;
   if(q){certEl.value=q;run()}
   // coverage counter: how many certs are indexed
   fetch('/data/cc/index.json').then(function(r){return r.ok?r.json():null}).then(function(d){

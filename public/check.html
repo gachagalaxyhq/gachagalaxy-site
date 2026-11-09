@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Check a graded Pokémon card | Gacha Galaxy</title>
-<meta name="description" content="Type a card name and see what PSA 10 copies actually sold for on eBay, with the spread and the number of sales behind it. Free, no signup.">
+<title>Price Check — graded Pokémon card sold prices | Gacha Galaxy</title>
+<meta name="description" content="Price Check: search PSA 10 sold-price aggregates, with the median, historical range, source counts and update dates. Free, no signup.">
 <link rel="canonical" href="https://gachagalaxy.io/check"><link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237a22c9'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif'%3EG%3C/text%3E%3C/svg%3E">
 <style>
 :root{--ink:#121016;--mut:#6b6675;--line:#e6e2ec;--brand:#7a22c9;--brand2:#5b17a0;--ok:#0f8a5f;--bg:#fbfafc;--card:#fff}
@@ -17,6 +17,7 @@ h1{font-size:clamp(30px,4.6vw,50px);line-height:1.06;letter-spacing:-.028em;marg
 h1 em{font-style:normal;color:var(--brand)}
 .lede{color:var(--mut);font-size:17px;max-width:56ch;margin:0 0 26px}
 form{display:flex;gap:10px;max-width:620px}
+.field{display:flex;flex-direction:column;gap:5px;flex:2 1 200px;min-width:0}.field label{font-size:13px;color:var(--mut);font-weight:600}.field input,.field select{width:100%}.req-f .field input,.req-f .field select{flex:none}.req-f button{align-self:flex-end}
 input[type=search]{flex:1;min-width:0;padding:15px 16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;font-size:16px;font-family:inherit;outline:none}
 input[type=search]:focus{border-color:var(--brand);box-shadow:0 0 0 4px #7a22c91a}
 button{padding:15px 22px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-size:16px;font-weight:650;font-family:inherit;cursor:pointer}
@@ -50,8 +51,8 @@ button:disabled{opacity:.55;cursor:default}
 .req-p small{display:block;font-size:12px;font-weight:500;color:var(--mut);letter-spacing:0;margin-top:6px}
 .req-f{display:flex;gap:10px;flex-wrap:wrap}
 .req-f input,.req-f select{padding:13px 14px;border:1.5px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;outline:none}
-.req-f input#rcert{flex:2 1 200px;min-width:0;font-variant-numeric:tabular-nums}
-.req-f input#remail{flex:2 1 200px;min-width:0}
+.req-f input#rcert{min-width:0;font-variant-numeric:tabular-nums}
+.req-f input#remail{min-width:0}
 .req-f select,.req-f button{flex:0 0 auto}
 .req-f input:focus,.req-f select:focus{border-color:var(--brand);box-shadow:0 0 0 4px #7a22c91a}
 .req-n{margin:12px 0 0;font-size:13px;color:var(--mut)}
@@ -68,7 +69,7 @@ footer p.next{margin:16px 0 0}
 footer p.next a{color:var(--brand);font-weight:600;text-decoration:none;border-bottom:1px solid #7a22c940;padding-bottom:2px;transition:border-color .15s}
 footer p.next a:hover{border-bottom-color:var(--brand)}
 footer p.cp{margin:16px 0 0;color:#8f8a99;font-size:12.5px}
-@media(max-width:520px){form{flex-direction:column}button{width:100%}.results{grid-template-columns:1fr}}
+@media(max-width:520px){form{flex-direction:column}.field{flex:none;width:100%}button{width:100%}.results{grid-template-columns:1fr}}
 @media(max-width:520px){
 .wrap{padding:0 16px}
 header{padding:12px 0 2px;gap:10px;flex-wrap:wrap}
@@ -93,38 +94,77 @@ h1{margin:18px 0 10px;font-size:29px}
 .paybtn{display:block;width:100%;text-align:center;margin-top:8px}
 footer{padding:18px 0 32px}
 }
+.price-search{margin:28px 0 30px;padding:32px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.price-search h1{margin:0 0 12px;font-size:38px}.price-search .lede{max-width:65ch;margin-bottom:24px}
+#f{max-width:none;align-items:flex-end}#f button{min-height:56px}#msg:empty,#out:empty{display:none}
+.price-links{display:flex;gap:10px 24px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:24px;font-size:14px}.price-links a{text-decoration:none;font-weight:600}
+.req>summary{font-size:18px;font-weight:650;cursor:pointer}.req[open]>summary{margin-bottom:22px}
+header{flex-wrap:wrap}header nav{flex-wrap:wrap;gap:8px 16px}header nav a[aria-current]{color:var(--brand);font-weight:700}
+@media(max-width:620px){.price-search{padding:22px 18px;margin-top:20px}.price-search h1{font-size:30px}header nav{justify-content:flex-start;gap:8px 14px}#f{flex-direction:column;align-items:stretch}#f .field{flex:none}#f button{width:100%}}
+/* Shared collector-tool treatment: quiet shell, strong task, one primary action. */
+body{background:#f6f5f9;color:#20172c}.wrap{max-width:1160px;padding-left:28px;padding-right:28px}
+header{min-height:88px;border-bottom:1px solid #e5e0eb;gap:24px;padding:20px 0}
+.logo{width:auto;height:auto;display:flex;gap:10px;align-items:center;background:none;color:#261634;font-size:16px;letter-spacing:-.4px;white-space:nowrap}
+.logo::before{content:'G';display:grid;place-items:center;width:32px;height:36px;background:#782ac1;color:white;border-radius:9px;font-size:19px}
+header nav{gap:5px;align-items:center;font-size:13px}header nav a{padding:8px 9px;border-radius:8px;color:#62596c}header nav a[aria-current]{background:#eee5f8;color:#6e20ad}
+.price-search{max-width:840px;margin:52px auto 0;padding:38px 40px 30px;border-radius:20px;border:1px solid #e5deec;box-shadow:0 8px 32px #28113905;background:#fff}
+.tool-label{margin:0 0 14px;color:#7943a2;font-size:11px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}
+.price-search h1{font-size:40px;letter-spacing:-1.4px;line-height:1.1;margin:0 0 14px}.price-search .lede{font-size:16px;line-height:1.65;max-width:58ch;color:#6a6074;margin-bottom:28px}
+#f{gap:12px}#f .field label{color:#51465d;font-size:12px;margin-bottom:3px}#f input{height:54px;padding:14px;border:1px solid #dcd5e5;border-radius:9px;background:#fcfbfd}#f button{height:54px;min-height:54px;padding:0 24px;border-radius:9px;font-size:14px}
+.price-search .hint{font-size:12px;margin-top:13px;color:#756b7e}.price-links{font-size:13px;margin-top:26px;padding-top:19px;justify-content:space-between}.price-links a{font-weight:550}
+.card .certificate-action{display:inline-block;margin-top:16px;padding:10px 14px;border-radius:9px;background:var(--brand);color:#fff;text-decoration:none;font-size:14px;font-weight:650}.card details{margin-top:12px;font-size:12.5px;color:var(--mut)}.card summary{cursor:pointer}.card .basis{margin:10px 0 0;font-size:13px;color:var(--mut)}.card a{overflow-wrap:anywhere}
+#msg,.results,.req{max-width:840px;margin-left:auto;margin-right:auto}#msg:empty+.results:empty{margin:0}.req{margin-top:24px;margin-bottom:40px;padding:20px 24px;border-radius:13px;background:transparent}.req>summary{font-size:14px;color:#554362}
+footer{margin-top:52px;background:transparent;border-top:1px solid #e5e0eb}footer .wrap{max-width:896px}footer p{font-size:12px;color:#7c7384;line-height:1.7}
+@media(max-width:900px){header nav{margin-left:0}header{gap:12px}.logo{width:100%}.price-search{margin-top:28px}}
+@media(max-width:520px){.wrap{padding-left:18px;padding-right:18px}header{padding:18px 0 16px}header nav{width:100%;justify-content:flex-start;gap:3px}header nav a{font-size:12px;padding:7px 8px}.price-search{padding:26px 22px 22px;margin-top:26px;border-radius:16px}.price-search h1{font-size:32px}.price-search .lede{font-size:15px;margin-bottom:22px}.price-links{gap:12px}.req{padding:18px;margin-top:20px}footer{margin-top:34px}}
 </style></head><body>
 <div class="wrap">
-<header><a class="logo" href="/">G</a><nav><a href="/platform">Platform</a><a href="/platform#/certified">Certified</a><a href="/check" style="color:var(--brand);font-weight:600">Check a card</a></nav></header>
+<header><a class="logo" href="/" aria-label="Gacha Galaxy home">Gacha Galaxy</a><nav aria-label="Sections"><a href="/platform?saved=1#/cards">Browse cards</a><a href="/platform?saved=1#/certified">Gacha Marks</a><a href="/check" aria-current="page">Price Check</a><a href="/cleancheck">Clean Check</a><a href="/platform?saved=1#/scanner">Price gaps</a><a href="/platform?saved=1#/collection">My Collection</a><a href="/platform?saved=1#/api">Public data</a></nav></header>
 
-<h1>What did it <em>actually</em> sell for?</h1>
-<p class="lede">Type a card name. We show what PSA 10 copies genuinely sold for on eBay — the median, the spread, and how many sales are behind it. Free, no signup.</p>
+<section class="price-search" aria-labelledby="price-title">
+<p class="tool-label">Card research · sold prices</p>
+<h1 id="price-title">Price Check</h1>
+<p class="lede">Search a Pokémon card to see its PSA 10 sold-price median, range and sales count. Free, no sign-up.</p>
 
-<form id="f" autocomplete="off"><input id="q" type="search" placeholder="Umbreon VMAX, Charizard base set, Lugia V…" aria-label="Card name" required><button id="go">Check</button></form>
-<p class="hint">Asking prices lie. Sold prices don't. This uses completed sales, not listings.</p>
+<form id="f" autocomplete="off" role="search" aria-label="Price Check"><div class="field"><label for="q">Card name</label><input id="q" type="search" placeholder="e.g. Rayquaza VMAX" aria-label="Card name for Price Check" required></div><button id="go">Price Check</button></form>
+<p class="hint">Based on reported historical sales, not asking prices. Dates and sources appear with each result.</p>
+<div class="price-links"><a href="/platform?saved=1#/cards">Browse card listings →</a><a href="/cleancheck">Check a certificate →</a></div>
+</section>
 <p id="msg" role="status" aria-live="polite"></p>
 <div class="results" id="out"></div>
 
-<div class="data-strip"><div><b>8,700</b><span>partner listings indexed for cert lookup</span></div><div><b>250</b><span>cards with sold-price data</span></div><div><b>6</b><span>Gacha Marks published onchain</span></div><div><b>$9</b><span>per mark · first 10 free</span></div></div>
-<section class="req" id="request">
-<p class="freebar" id="freebar"><b>First 10 marks are free.</b> <span id="freeleft">No payment needed for those — just request one.</span></p>
-<div class="req-h"><div><h2>A Gacha Mark is $9<span class="per">per slab</span></h2><p>We check the cert against the grading authority's record, put that record and the sold-price range onchain, and give you a page and a PDF anyone can verify. Paid once, no subscription. Ten for $49, dealers $199 a year.</p></div><div class="req-p">$9<small>one slab, one mark</small></div></div>
+<details class="req" id="request"><summary>Request a Gacha Mark evidence review</summary>
+<p class="freebar" id="freebar"><b id="intake-label">Checking request availability…</b> <span id="freeleft">New requests are not complimentary. The first-ten-free request allowance is exhausted; existing complimentary allocations are unchanged.</span></p>
+<div class="req-h"><div><h2>Gacha Mark</h2><p>Request an evidence review, separate from the free basic Clean Check. Requests are accepted when availability is confirmed below. Saving a request does not issue a Mark or promise fulfilment. <span id="payment-status">Payments are inactive; submitting is not a paid order.</span></p></div></div>
 <form class="req-f" id="rq" autocomplete="on">
-<input id="rcert" inputmode="numeric" placeholder="PSA cert number, e.g. 109308847" aria-label="Cert number">
-<select id="rgr" aria-label="Grader"><option value="PSA">PSA</option><option value="CGC">CGC</option></select>
-<input id="remail" type="email" placeholder="Your email" aria-label="Your email">
-<button type="submit" id="rgo">Request a mark</button>
+<div class="field"><label for="rcert">Certificate number</label><input id="rcert" inputmode="numeric" maxlength="64" placeholder="e.g. 109308847" aria-label="Cert reference" required></div>
+<div class="field"><label for="rgr">Grader</label><select id="rgr" aria-label="Grader" required><option value="">Choose grader</option><option value="PSA">PSA</option><option value="CGC">CGC</option></select></div>
+<div class="field"><label for="remail">Contact email</label><input id="remail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" aria-label="Your contact email" required></div>
+<button type="submit" id="rgo" disabled aria-describedby="rn">Checking availability…</button>
 </form>
-<p class="req-n" id="rn">We confirm the cert first, then send a payment link. If it does not check out, you are not charged.</p>
-</section>
+<p class="req-n" id="rn" role="status" aria-live="polite">No request saved, payment collected or Mark issued.</p>
+<p class="req-n"><a href="/cleancheck" id="evidence-link">Review saved source evidence →</a> · Contact email is stored privately for this request. A duplicate keeps the original contact; submission does not verify ownership. <a href="/privacy">Privacy →</a></p>
+<p class="req-n"><a id="listing-link" hidden>Back to saved listing →</a> <a href="/platform?saved=1#/certified">Browse saved Gacha Marks →</a></p>
+<details class="req-n"><summary>Request limits and evidence</summary><p>Requests accept PSA and CGC certificate numbers with 6–10 digits. Clean Check can look up longer CGC numbers, but this does not expand request eligibility. The complimentary allowance applies across all requests, not per person. Grader records, QR matches and physical authenticity are separate checks and are not verified by submitting. Clean Check reads saved sources; live Horizen execution has not been verified.</p><a href="/certificate">About Gacha Mark →</a></details>
+</details>
 </div>
 
-<footer><div class="wrap"><p>Prices are eBay sold comps, median-weighted over the last seven days, supplied by PokemonPriceTracker. A price is a record of past sales, not a forecast, an offer, or advice.</p><p class="next"><a href="/cleancheck">Clean Check a marketplace listing <span aria-hidden="true">→</span></a></p><p class="cp">© 2026 Gacha Galaxy Labs Inc.</p></div></footer>
+<details class="req"><summary>Sold-price source and sample details</summary><p>Historical sold-price aggregates are supplied by PokemonPriceTracker and may combine marketplaces. The median, range and count describe the provider's historical sample, not a verified seven-day sample. Last sale and provider update dates are separate; old or small samples are not current valuations.</p></details>
+<footer><div class="wrap"><p>A price is a record of past sales, not a forecast, an offer, or advice.</p><p class="next"><a href="/cleancheck">Review saved certificate evidence <span aria-hidden="true">→</span></a></p><p class="cp">© 2026 Gacha Galaxy Labs Inc.</p></div></footer>
 
 <script>
 const $=s=>document.querySelector(s),out=$('#out'),msg=$('#msg');
-const money=n=>n==null?'—':'$'+Math.round(n).toLocaleString('en-US');
-const ago=s=>{if(!s)return'';const d=Math.round((Date.now()-Date.parse(s))/864e5);return d<=0?'today':d===1?'yesterday':d+' days ago'};
+function openRequest(){if(location.hash==='#request')document.getElementById('request').open=true}openRequest();window.addEventListener('hashchange',openRequest);
+const money=n=>typeof n!=='number'||!Number.isFinite(n)?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const date=s=>{const t=typeof s==='string'?Date.parse(s):NaN;return Number.isFinite(t)&&t<=Date.now()?new Date(t).toISOString().slice(0,10)+' UTC':'unknown'};
+const sources=s=>s&&Object.keys(s).length?Object.entries(s).map(([k,n])=>esc(k)+': '+n.toLocaleString('en-US')).join(' · '):'unknown';
+function certificateContext(c){
+  const context=new URLSearchParams();
+  for(const [key,value] of Object.entries({name:c.name,set:c.set,number:c.number,grade:c.psa10?'PSA 10':null})){
+    if(value!=null&&String(value).trim())context.set(key,String(value).trim().slice(0,300));
+  }
+  return '/cleancheck'+(context.size?'?'+context.toString():'');
+}
 let seq=0;
 async function run(q){
   const my=++seq;out.innerHTML='';msg.className='';msg.textContent='Checking sold sales…';$('#go').disabled=true;
@@ -133,15 +173,19 @@ async function run(q){
     const d=await r.json();
     if(my!==seq)return;
     if(!r.ok){msg.className='err';msg.textContent=d.error||'Lookup failed.';return}
+    if(!d||!Array.isArray(d.cards))throw new Error('Invalid lookup response');
     if(!d.cards.length){msg.textContent='No match. Try fewer words — a Pokémon name and a set works best.';return}
     msg.textContent=d.cards.length+(d.cards.length===1?' card':' cards')+' found.';
     out.innerHTML=d.cards.map(c=>{
       const p=c.psa10;
       return `<article class="card"><h3>${esc(c.name)}</h3><p class="set">${esc(c.set||'')}${c.number?' · #'+esc(String(c.number)):''}</p>`+
-      (p?`<div class="pt"><b>${money(p.mkt??p.median)}</b><span>PSA 10 sold</span></div>
-        <div class="range">${money(p.min)} – ${money(p.max)} across ${p.n.toLocaleString('en-US')} sales</div>
-        <div class="meta"><span>Last sale ${ago(p.last)||'unknown'}</span><span>${p.conf?esc(p.conf)+' confidence':''}</span></div>`
-      :`<div class="pt"><b>—</b><span>no PSA 10 sales</span></div>`)+`</article>`
+      (p?`<div class="pt"><b>${money(p.median)}</b><span>PSA 10 historical sold median</span></div>
+        <div class="range">${money(p.min)} – ${money(p.max)} across ${p.n.toLocaleString('en-US')} historical sales</div>
+        <div class="meta"><span>Last sale ${date(p.last)}</span><span>Provider updated ${date(p.updated)}</span>${p.n<3?'<span>Small sample — fewer than 3 sales</span>':''}${Number.isFinite(Date.parse(p.last))&&Date.now()-Date.parse(p.last)>7*864e5?'<span>No reported sale in the last 7 days</span>':''}</div>
+        <p class="basis">Basis: reported completed PSA 10 sales for this card identity, not a sale of an individual certificate or a current asking price.</p>
+        <details><summary>Sold-price source and sample</summary><p>Source: PokemonPriceTracker. Marketplaces: ${sources(p.sources)}. Sample: ${p.n.toLocaleString('en-US')} historical sales; reporting window not supplied. Last sale ${date(p.last)}; provider updated ${date(p.updated)}. No seven-day sample is implied.</p></details>`
+      :`<div class="pt"><b>—</b><span>no PSA 10 sales</span></div><p class="basis">PSA 10 sold-price sample, dates and basis unavailable for this result.</p>`)+
+      `<p class="basis">A Gacha Mark is a separate dated evidence record for a certificate. Its recorded price basis and date may differ from this historical median; opening it does not update either value.</p><a class="certificate-action" href="${esc(certificateContext(c))}">Check this slab's certificate →</a><p class="basis">Enter the certificate printed on your slab next. A card name does not identify a certificate.</p></article>`
     }).join('');
   }catch(e){if(my===seq){msg.className='err';msg.textContent='Network problem. Try again.'}}
   finally{if(my===seq)$('#go').disabled=false}
@@ -152,39 +196,69 @@ const p=new URLSearchParams(location.search).get('q');if(p){$('#q').value=p;run(
 </script><script>
 (function(){
   var rqEl=document.getElementById('rq'); if(!rqEl) return;
-  var fb=document.getElementById('freebar'), fl=document.getElementById('freeleft');
-  function paint(d){
-    if(!d||!d.ok||d.freeLeft==null){if(fl)fl.textContent='Request a mark and we will confirm the price with you.';return}
-    if(d.freeLeft<=0){if(fb)fb.className='freebar gone';return}
-    if(fl)fl.textContent=d.freeLeft+' of '+d.freeLimit+' left \u2014 no payment needed for those.';
+  var go2=document.getElementById('rgo'),rnEl=document.getElementById('rn'),fl=document.getElementById('freeleft'),fb=document.getElementById('intake-label');
+  var available=false,pending=false,graders=[];
+  go2.disabled=true;
+  var params=new URLSearchParams(location.search), supplied=params.get('cert'), suppliedGrader=(params.get('grader')||'').trim().toUpperCase();
+  if(supplied)document.getElementById('rcert').value=supplied;
+  if(suppliedGrader==='PSA'||suppliedGrader==='CGC')document.getElementById('rgr').value=suppliedGrader;
+  function evidenceLink(){var cert=nz(document.getElementById('rcert').value),gr=document.getElementById('rgr').value;
+    var valid=(gr==='PSA'&&/^[1-9]\d{5,9}$/.test(cert))||(gr==='CGC'&&/^[1-9]\d{5,12}$/.test(cert));
+    var link=document.getElementById('evidence-link');link.href=valid?'/cleancheck?cert='+encodeURIComponent(cert)+'&grader='+encodeURIComponent(gr):'/cleancheck';
+    var listing=document.getElementById('listing-link');listing.hidden=!valid;if(valid)listing.href='/platform?saved=1#/listing/'+encodeURIComponent(gr)+'/'+encodeURIComponent(cert);else listing.removeAttribute('href');}
+  document.getElementById('rcert').addEventListener('input',evidenceLink);document.getElementById('rgr').addEventListener('change',evidenceLink);evidenceLink();
+  function nz(v){if(typeof v!=='string'||!/^[\d\s-]+$/.test(v))return '';var d=v.replace(/[\s-]/g,'');return d.replace(/^0+(?=\d)/,'')}
+  function note(text,error){rnEl.className='req-n'+(error?' err':'');rnEl.textContent=text}
+  function allowance(left,limit){return Number.isInteger(limit)&&limit>0&&Number.isInteger(left)&&left>=0&&left<=limit}
+  function paint(left,limit){fb.textContent='Requests accepted.';fl.textContent=left===0?'No complimentary requests remain. New requests are not free.':left+' of '+limit+' complimentary request allocations remain across all requests, not per person. Eligibility is confirmed only when a request is saved.'}
+  function button(){go2.disabled=pending||!available;go2.textContent=pending?'Sending…':available?'Request a Mark':'Requests unavailable'}
+  async function loadStatus(){
+    try{
+      var r=await fetch('/api/mark-request',{cache:'no-store'}),d=await r.json();
+      available=r.ok&&d.ok===true&&d.intakeStatus==='available'&&d.allowanceScope==='global'&&
+        allowance(d.freeLeft,d.freeLimit)&&Array.isArray(d.supportedGraders)&&d.supportedGraders.length>0&&
+        d.supportedGraders.every(function(g){return g==='PSA'||g==='CGC'});
+      document.getElementById('payment-status').textContent=d.paymentStatus==='inactive'&&d.payUrl===null?'Payments are inactive; submitting is not a paid order.':'Payment availability could not be confirmed. Submitting this form does not collect payment.';
+      if(available){graders=d.supportedGraders;paint(d.freeLeft,d.freeLimit);note('Ready to submit a request. Submission does not collect payment or issue a Mark.')}
+      else{fb.textContent='Requests unavailable.';note('Request availability could not be confirmed. No request has been sent.');fl.textContent='Complimentary eligibility could not be confirmed.'}
+    }catch(e){fb.textContent='Requests unavailable.';fl.textContent='Complimentary eligibility could not be confirmed.';note('Could not confirm request availability. No request has been sent.',true)}
+    button();
   }
-  fetch('/api/mark-request').then(function(r){return r.json()}).then(paint).catch(function(){});
-  function nz(v){var d=String(v==null?'':v).replace(/\D/g,'');return d.replace(/^0+(?=\d)/,'')}
-  rqEl.addEventListener('submit',function(e){
+  rqEl.addEventListener('submit',async function(e){
     e.preventDefault();
-    var rnEl=document.getElementById('rn'), go2=document.getElementById('rgo');
+    if(pending)return;
     var cert=nz(document.getElementById('rcert').value);
-    var email=document.getElementById('remail').value.trim();
     var gr=document.getElementById('rgr').value;
+    var email=document.getElementById('remail').value.trim().toLowerCase();
     rnEl.className='req-n';
-    if(!cert||cert.length<5){rnEl.className='req-n err';rnEl.textContent='Enter the cert number from the slab label.';return}
-    if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)){rnEl.className='req-n err';rnEl.textContent='Enter an email so we can send the payment link.';return}
-    go2.disabled=true;go2.textContent='Sending\u2026';
-    fetch('/api/mark-request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cert:cert,grader:gr,email:email})})
-      .then(function(r){return r.json()})
-      .then(function(d){
-        if(d&&d.ok){
-          if(d.free){rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. This one is free \u2014 we check it and email '+email+'.'}
-          else{rnEl.className='req-n ok';rnEl.textContent='Request received for cert '+cert+'. We check it, then email '+email+' a payment link.'}
-          rqEl.reset();
-          if(typeof paint==='function')paint({ok:true,freeLeft:d.remaining,freeLimit:10});
-          if(d.payUrl){var ax=document.createElement('a');ax.className='paybtn';ax.href=d.payUrl;ax.textContent='Pay $9 now';rnEl.appendChild(document.createElement('br'));rnEl.appendChild(ax);}
-        }
-        else{rnEl.className='req-n err';rnEl.textContent=(d&&d.error)||'Could not send that. Try again.'}
-      })
-      .catch(function(){rnEl.className='req-n err';rnEl.textContent='Could not reach the server. Try again.'})
-      .then(function(){go2.disabled=false;go2.textContent='Request a mark'});
+    if(!/^[1-9]\d{5,9}$/.test(cert)){rnEl.className='req-n err';rnEl.textContent='Enter a cert number with 6–10 digits from the slab label.';return}
+    if(gr!=='PSA'&&gr!=='CGC'){rnEl.className='req-n err';rnEl.textContent='Choose the grader shown on the slab label.';return}
+    if(!available){note('Requests are currently unavailable. No request sent, payment collected or Mark issued.');button();return}
+    if(!graders.includes(gr)){note('Request intake is not configured for this grader. No request sent.',true);return}
+    if(email.length>254||!/^[^\s@\x00-\x1f\x7f]+@[^\s@\x00-\x1f\x7f]+\.[^\s@\x00-\x1f\x7f]{2,}$/.test(email)){note('Enter a valid contact email for this request.',true);return}
+    pending=true;button();note('Sending request for '+gr+' cert '+cert+'… Do not assume it is saved yet.');
+    document.getElementById('rcert').disabled=true;document.getElementById('rgr').disabled=true;document.getElementById('remail').disabled=true;
+    try{
+      var r=await fetch('/api/mark-request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cert:cert,grader:gr,email:email})});
+      var d=await r.json();
+      if(r.status===503&&d.ok===false&&d.intakeStatus==='unavailable'){
+        available=false;fb.textContent='Requests unavailable.';fl.textContent='Complimentary eligibility could not be confirmed.';
+        note('Requests are currently unavailable. No request saved, payment collected or Mark issued.',true);return;
+      }
+      if(r.status===400||r.status===413){note('Request rejected. Check the cert, grader and contact email. No request saved, payment collected or Mark issued.',true);return}
+      if(!r.ok||d.ok!==true||d.intakeStatus!=='accepted'||d.status!=='requested'||d.cert!==cert||d.grader!==gr||
+        typeof d.id!=='string'||!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(d.id)||
+        typeof d.existing!=='boolean'||typeof d.free!=='boolean'||d.allowanceScope!=='global'||!allowance(d.remaining,d.freeLimit)||
+        d.paymentStatus!=='inactive'||d.payUrl!==null)throw new Error('Unconfirmed response');
+      paint(d.remaining,d.freeLimit);
+      rnEl.className='req-n ok';rnEl.textContent=(d.existing?'Request already exists':'Request saved')+' for '+gr+' cert '+cert+'. Reference: '+d.id+'. '+
+        (d.existing?'Original contact and allowance decision retained. ':'')+
+        (d.free?'Complimentary request allocation recorded. ':'No complimentary allocation recorded. Payments remain disabled; no paid processing started. ')+
+        'Status: requested, not an issued Mark. No payment collected or fulfilment promised.';
+    }catch(e){note('Request status could not be confirmed. Retry with the same grader and cert; do not assume it was saved. No payment collected or Mark issuance confirmed.',true)}
+    finally{pending=false;document.getElementById('rcert').disabled=false;document.getElementById('rgr').disabled=false;document.getElementById('remail').disabled=false;button()}
   });
+  loadStatus();
 })();
 </script>
 </body></html>

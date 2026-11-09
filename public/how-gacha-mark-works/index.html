@@ -69,10 +69,12 @@ a{color:inherit;text-decoration:none}ul{list-style:none;padding:0;margin:0}img{d
 <header class="hero"><div class="container">
 <span class="label">[ How Gacha Mark works ]</span>
 <h1>One record per PSA cert, <span>that anyone can check.</span></h1>
-<p>A Gacha Mark is a public record for one graded card. It is keyed by grader and cert number, so a single cert has a single record, and anyone can see who published it and whether it still stands.</p>
+<p>A dated record of the evidence reviewed for this graded card, with publication history and a report you can share. Existing records remain readable. Evidence-review requests are accepted separately from free Clean Check; new requests are not complimentary and payments are inactive.</p>
+<p><a href="/check">Price Check</a> searches historical PSA 10 sales. Clean Check compares saved certificate evidence. Where supported, links to requests and Card Passport carry the grader and cert reference; a price search does not automatically identify the same card across tools.</p>
+<p>The steps below explain requests and existing records, not a promise of issuance or fulfilment. A cert reference or QR match does not authenticate a physical slab. Each record states the checks actually performed. <a href="/certificate">Current service, limits and existing free allowance policy →</a></p>
 <dl class="rec">
 <div><dt>Key</dt><dd>PSA · cert no.</dd></div>
-<div><dt>Grade</dt><dd>From the grading record</dd></div>
+<div><dt>Grade</dt><dd>Recorded grade</dd></div>
 <div><dt>Value</dt><dd>Reference value, USD</dd></div>
 <div><dt>Publisher</dt><dd>Who wrote it</dd></div>
 <div><dt>Status</dt><dd>Active or revoked</dd></div>
@@ -82,15 +84,15 @@ a{color:inherit;text-decoration:none}ul{list-style:none;padding:0;margin:0}img{d
 <section class="sec"><div class="container">
 <span class="label">[ The steps ]</span>
 <h2>From request to public record</h2>
-<p class="sub">Seven steps. Nothing is published automatically.</p>
+<p class="sub">Requests can be submitted for review. Submission does not collect payment or issue a Mark. No delivery deadline, automatic refresh or new grader check is promised.</p>
 <ul class="steps">
-<li class="st"><span class="st__n">01</span><div><h3>Request</h3><p>Add a PSA cert to My Collection and ask for a Mark. You can follow the status and the reason for every decision, and cancel at any time.</p></div></li>
-<li class="st"><span class="st__n">02</span><div><h3>Grading check</h3><p>We read the grading record for that cert number: card, set, number and grade. If the cert can't be found, or the details don't match, the request stops here.</p></div></li>
-<li class="st"><span class="st__n">03</span><div><h3>Reference value</h3><p>We set a value from public marketplace prices for the same card at the same grade. No Mark below $50 or below medium confidence. Prices are asking prices, not completed sales.</p></div></li>
-<li class="st"><span class="st__n">04</span><div><h3>Human review</h3><p>A person checks the request before anything is published. A grading record existing is never enough on its own, and every decision is logged with a reason.</p></div></li>
-<li class="st"><span class="st__n">05</span><div><h3>Recorded onchain</h3><p>The Mark is written to a registry on Robinhood Chain, keyed by grader and cert number: value, grade, publish date and publisher.</p></div></li>
-<li class="st"><span class="st__n">06</span><div><h3>Anyone can check it</h3><p>Every Mark has a public page and a QR code. The page reads the registry directly, so you can compare what the site shows with what the chain holds.</p></div></li>
-<li class="st"><span class="st__n">07</span><div><h3>Kept current</h3><p>Each Mark lasts 30 days and is rechecked before then. If the value drops under $50 or moves sharply, it goes back for review. A revoked Mark is labelled as revoked, not removed.</p></div></li>
+<li class="st"><span class="st__n">01</span><div><h3>Request an evidence review</h3><p>The form confirms availability and accepts eligible grader and cert references. The complimentary allowance is exhausted. <a href="/check#request">Open request options →</a></p></div></li>
+<li class="st"><span class="st__n">02</span><div><h3>Read the available identity evidence</h3><p>Compare the recorded card, set, number and grade. A saved cert reference is not a new grader lookup; missing or conflicting details remain visible.</p></div></li>
+<li class="st"><span class="st__n">03</span><div><h3>Reference value</h3><p>Read the basis saved with each Mark: asking-price inputs or a historical PSA 10 sales reference where stated. A reference is not a sale of that specific certificate.</p></div></li>
+<li class="st"><span class="st__n">04</span><div><h3>Human review</h3><p>A submitted request is a request for review, not an approval. Existing records and request statuses are separate; submission does not guarantee publication.</p></div></li>
+<li class="st"><span class="st__n">05</span><div><h3>Recorded onchain</h3><p>The 18 existing public Marks include Robinhood Chain testnet publication history, keyed by grader and cert number. Open the record to inspect its dates, values and transactions.</p></div></li>
+<li class="st"><span class="st__n">06</span><div><h3>Anyone can check it</h3><p>Open an existing Mark page, copy its link or download its report. Saved views show recorded publication history; the explorer link lets you inspect the referenced transaction separately.</p></div></li>
+<li class="st"><span class="st__n">07</span><div><h3>Read the publication date</h3><p>The page labels the recorded 30-day review window and any expiry or revocation. Reading it does not trigger a recheck or guarantee an automatic refresh.</p></div></li>
 </ul>
 </div></section>
 
@@ -101,15 +103,15 @@ a{color:inherit;text-decoration:none}ul{list-style:none;padding:0;margin:0}img{d
 <div class="two">
 <div class="box box--y"><h3>It shows</h3><ul>
 <li>That this cert has one public record, and who published it</li>
-<li>The grade from the grading record at the time of the check</li>
+<li>The recorded grade and the evidence limits stated on the page</li>
 <li>A reference value and the date it was set</li>
 <li>Whether the record is active or revoked</li>
 </ul></div>
 <div class="box box--n"><h3>It does not show</h3><ul>
 <li>That a physical slab is genuine. A copied label can carry a real cert number</li>
 <li>Who owns the card, or where it is held</li>
-<li>A guaranteed price. Values come from asking prices, not completed sales</li>
-<li>Anything about grades from other graders. Marks cover PSA only for now</li>
+<li>A guaranteed price. Each Mark states its own saved price basis</li>
+<li>Evidence about another grader or cert number; records remain specific to their recorded identity</li>
 </ul></div>
 </div>
 <p class="note">Check the slab itself and the grader's own cert lookup before you buy. Gacha Mark is in pre-production and may change.</p>

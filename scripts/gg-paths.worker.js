@@ -2,8 +2,8 @@
 const ORIGIN = 'https://gachagalaxy-site.pages.dev';
 const PATHS = new Set(['/prices.json', '/robots.txt', '/sitemap.xml', '/favicon.ico', '/apple-touch-icon.png']);
 // Exact HTML pages that live only on Pages (Dan's server does not forward them)
-const PAGES = new Map([['/how-gacha-mark-works', '/how-gacha-mark-works/'], ['/how-gacha-mark-works/', '/how-gacha-mark-works/'], ['/cleancheck', '/cleancheck.html'], ['/check', '/check.html'], ['/check/', '/check.html'], ['/certificate', '/certificate.html'], ['/certificate/', '/certificate.html']]);
-const PREFIXES = ['/data/cc/', '/data/own-claims.json'];
+const PAGES = new Map([['/how-gacha-mark-works', '/how-gacha-mark-works/'], ['/how-gacha-mark-works/', '/how-gacha-mark-works/'], ['/cleancheck', '/cleancheck'], ['/check', '/check'], ['/check/', '/check'], ['/certificate', '/certificate'], ['/certificate/', '/certificate'], ['/platform', '/platform.html'], ['/platform/', '/platform.html'], ['/platform.html', '/platform.html']]);
+const PREFIXES = ['/data/cc/', '/data/own-claims.json', '/data/catalogue/', '/data/catalogue-search.js', '/data/collector-evidence.json', '/cards/'];
 export default {
   async fetch(req) {
     const u = new URL(req.url);
@@ -15,10 +15,24 @@ export default {
     if (PAGES.has(u.pathname)) {
       const tgt = PAGES.get(u.pathname);
       if (!u.pathname.endsWith('/') && tgt.endsWith('/')) return Response.redirect(u.origin + tgt + u.search, 301);
-      const p = await fetch(ORIGIN + PAGES.get(u.pathname), { cf: { cacheTtl: 300 } });
-      if (!p.ok) return fetch(req);
+      const pageInit = { headers: { 'cache-control': 'no-cache' }, cf: { cacheTtl: 0, cacheEverything: false } };
+      let p = await fetch(ORIGIN + tgt, pageInit);
+      // Pages issues 308 for .html and for slash variants; follow it ourselves so a
+      // redirected target is never mistaken for a missing page.
+      if (p.status >= 300 && p.status < 400) {
+        const loc = p.headers.get('location');
+        if (loc) p = await fetch(new URL(loc, ORIGIN).href, pageInit);
+      }
+      if (!p.ok) {
+        const ph0 = new Headers(p.headers);
+        ph0.set('x-gg-fallback', String(p.status));
+        return new Response(p.body, { status: p.status, headers: ph0 });
+      }
       const ph = new Headers(p.headers);
-      ph.set('cache-control', 'public, max-age=300');
+      ph.set('cache-control', 'no-store, max-age=0');
+      ph.set('cdn-cache-control', 'no-store');
+      ph.delete('etag');
+      ph.delete('last-modified');
       ph.set('x-gg-worker', '1');
       return new Response(p.body, { status: 200, headers: ph });
     }

@@ -1,0 +1,72 @@
+{
+  "actual_issued_count": 6,
+  "indexed_total": 12,
+  "old_six_preserved": true,
+  "testnet_chain_id": 46630,
+  "transactions": [
+    {
+      "identity": "PSA:158538600",
+      "tx": "0x6d1b2f480e0bbc17f874f2b7269589af06220ab5dc0e793cc8b1e09f672f5247",
+      "block": 150108338,
+      "published_at": "2026-11-07T18:30:00.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:151114672",
+      "tx": "0xb4ac3f8cc7b2d6cdad2e6a244894767865472d224669e0c88787fb9b602dc352",
+      "block": 150108364,
+      "published_at": "2026-11-07T18:30:05.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:162925956",
+      "tx": "0x349c30531026d2c5c1e967c3a72854408e8986917ddb2ebd528afc405f1c535a",
+      "block": 150108388,
+      "published_at": "2026-11-07T18:30:09.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:120515467",
+      "tx": "0x397432566245815f0593852ee04dc8fc3ec86151c81f9da802f23f233ba00ee8",
+      "block": 150108414,
+      "published_at": "2026-11-07T18:30:14.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:171402573",
+      "tx": "0x62b1c5896398fe3aeddc547db9fe846fc49081d1f175659a27fc54566a30f521",
+      "block": 150108438,
+      "published_at": "2026-11-07T18:30:18.000Z",
+      "status": "confirmed"
+    },
+    {
+      "identity": "PSA:163541653",
+      "tx": "0x71fc271f69cde1131f559aa304e8d0a47cbcb662fbe710df8be56f7b9410dcd3",
+      "block": 150108459,
+      "published_at": "2026-11-07T18:30:23.000Z",
+      "status": "confirmed"
+    }
+  ],
+  "total_fee_wei": "6055860000000",
+  "database_written": false,
+  "deployed": false,
+  "committed": false,
+  "pushed": false,
+  "prepared_evidence_unchanged": true,
+  "changed_existing_files": [
+    "src/certs.json",
+    "src/onchain.json"
+  ],
+  "new_files": [
+    "operations/additional-marks-receipts.json",
+    "operations/additional-marks-preflight.json",
+    "operations/additional-marks-publication-ready.json",
+    "operations/pre-issuance-certs.json",
+    "operations/pre-issuance-onchain.json",
+    "scripts/index_issued_six.py",
+    "scripts/package_issued_six.py",
+    "operations/additional-marks-execution-report.json",
+    "/tmp/opencode/pub/issue_prepared_six.mjs"
+  ],
+  "parent_handoff": "Local source indexes updated. Public files, database import, UI cleanup, routing and deployment remain with parent. Original preparation intentionally retained unchanged; receipts and publication-ready data are authoritative for issuance."
+}
