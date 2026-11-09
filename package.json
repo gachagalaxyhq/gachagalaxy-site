@@ -1,0 +1,15 @@
+{
+  "name": "gachagalaxy-site",
+  "private": true,
+  "description": "Gacha Galaxy public site. No build step; this file only pins local test dependencies.",
+  "scripts": {
+    "test": "npm run test:node && npm run test:py",
+    "test:node": "node --test tests/*.test.mjs",
+    "test:py": "python3 -m pytest -q tests"
+  },
+  "devDependencies": {
+    "ethers": "6.17.0",
+    "jspdf": "2.5.2",
+    "linkedom": "^0.18.15"
+  }
+}

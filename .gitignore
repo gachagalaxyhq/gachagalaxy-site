@@ -5,3 +5,4 @@ shot_*.json
 .wrangler/
 operations/mark-signing.html
 operations/pre-issuance-certs.json
+node_modules/
