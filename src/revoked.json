@@ -1,0 +1,4 @@
+{
+  "note": "Revoked Gacha Marks. The monthly republish skips these, so they expire within 30 days of their last publish. Add {\"grader\":\"PSA\",\"cert\":\"<digits>\",\"reason\":\"...\",\"at\":\"YYYY-MM-DD\"}.",
+  "revoked": []
+}
