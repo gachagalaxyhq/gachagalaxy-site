@@ -23,7 +23,8 @@ const result = text => JSON.parse(text.split('\n').find(line => line.startsWith(
 const handlerSource = await readFile(new URL('../functions/api/mark-request.js', import.meta.url), 'utf8');
 const intakeApi = await import('data:text/javascript;base64,' + Buffer.from(handlerSource).toString('base64'));
 const pageSource = await readFile(new URL('../public/check.html', import.meta.url), 'utf8');
-const localConfig = { MARK_INTAKE_API_KEY:'local-only', MARK_INTAKE_RPC_TOKEN:'local-only' };
+// All three scoped bindings are required since the gate token was added (otherwise 503 before transport).
+const localConfig = { MARK_INTAKE_API_KEY:'local-only', MARK_INTAKE_RPC_TOKEN:'local-only', MARK_INTAKE_GATE:'local-only' };
 // Transport adapter only: every successful response comes from the actual SQL
 // RPC under the actual scoped role, on this harness's disposable server.
 async function localGateway(url, options) {
@@ -105,7 +106,8 @@ test('actual frontend → handler → scoped SQL RPC saves, retries, separates g
   // The default migration, even with the reviewed handler, has no configured usage.
   const closed = await intakePage(reviewed);
   assert.equal(closed.element('rgo').disabled,true);
-  assert.match(closed.element('rn').textContent,/Request intake unavailable/);
+  // Live check.html copy for an unconfirmed/closed status (was 'Request intake unavailable').
+  assert.match(closed.element('rn').textContent,/Request availability could not be confirmed\. No request has been sent/);
   await closed.submit();
   assert.deepEqual(closed.calls,['GET']);
   assert.equal(await sql('select used is null from mark_intake_private.policy'),'t');
@@ -144,7 +146,8 @@ test('actual frontend → handler → scoped SQL RPC saves, retries, separates g
   await sql('update mark_intake_private.policy set approved=false');
   p.element('rcert').value='777777';await p.submit();
   assert.equal(p.element('rgo').disabled,true);
-  assert.match(p.element('rn').textContent,/configured policy is not approved/);
+  // Live check.html copy for a 503 'unavailable' POST (was 'configured policy is not approved').
+  assert.match(p.element('rn').textContent,/Requests are currently unavailable\. No request saved, payment collected or Mark issued/);
   assert.equal(await sql('select count(*) from mark_intake_private.requests'),'2');
   // Restore the default closed state for subsequent independent tests.
   await sql('truncate mark_intake_private.requests; update mark_intake_private.policy set approved=false,legacy_reconciled=false,scope=null,used=null,approval_reference=null');

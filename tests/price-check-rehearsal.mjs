@@ -5,11 +5,20 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
-const require = createRequire('/tmp/opencode/mark-review-isolated/package.json');
+import test from 'node:test';
+// SKIP REASON (written): this rehearsal replays a saved, licensed PokemonPriceTracker response
+// (sha256 8dd31162…) that is not tracked in the repo. Re-fetching it would call the production
+// provider API, which tests must never do. Supply the saved bytes via PPT_EBAY_FIXTURE (default
+// /tmp/opencode/ppt_ebay.json) to run it. Note: the check.html section hashes below were pinned to
+// an older page; when the fixture is available the rehearsal must be re-recorded against the live page.
+const fixture = process.env.PPT_EBAY_FIXTURE || '/tmp/opencode/ppt_ebay.json';
+test('Price Check local HTTP + real browser rehearsal over saved provider bytes',
+  {skip: !fs.existsSync(fixture) && 'saved provider fixture not in repo; fetching it would hit the production provider API'}, async () => {
+const require = createRequire(new URL('../package.json', import.meta.url));
 const puppeteer = require('puppeteer-core');
 const chromium = require('@sparticuz/chromium').default;
 const root = new URL('../', import.meta.url);
-const bytes = fs.readFileSync('/tmp/opencode/ppt_ebay.json');
+const bytes = fs.readFileSync(fixture);
 const saved = JSON.parse(bytes);
 const html = fs.readFileSync(new URL('public/check.html', root), 'utf8');
 const source = fs.readFileSync(new URL('functions/api/check.js', root), 'utf8');
@@ -102,3 +111,4 @@ try {
   await new Promise(resolve=>server.close(resolve));
   globalThis.fetch=originalFetch;
 }
+});
