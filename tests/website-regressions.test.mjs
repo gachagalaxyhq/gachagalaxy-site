@@ -28,7 +28,8 @@ function boot(file,query='',responses={}){
   }
   throw new Error('Unstubbed fetch: '+url);
  };
- const context=vm.createContext({document,fetch,URLSearchParams,location:{search:query},history:{replaceState(...args){context.lastURL=args[2]}},console});
+ // check.html opens #request via location.hash + window 'hashchange'; stub both (no navigation happens).
+ const context=vm.createContext({document,fetch,URLSearchParams,location:{search:query,hash:''},window:{addEventListener(){}},history:{replaceState(...args){context.lastURL=args[2]}},console});
  for(const script of scripts(html))vm.runInContext(script,context,{filename:file});
  return {elements,calls,context};
 }

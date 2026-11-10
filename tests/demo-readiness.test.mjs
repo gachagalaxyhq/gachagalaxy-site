@@ -88,12 +88,12 @@ async function page(name, search, fetcher) {
   const elements = new Map();
   function element(id) {
     if (!elements.has(id)) elements.set(id, { value: id === 'rgr' ? 'PSA' : '', className: '', textContent: '', innerHTML: '', disabled: false,
-      children: [], appendChild(child) { this.children.push(child); },
+      children: [], appendChild(child) { this.children.push(child); }, removeAttribute(key) { delete this[key]; },
       events: {}, addEventListener(event, fn) { this.events[event] = fn; }, focus() {}, reset() {} });
     return elements.get(id);
   }
   const context = vm.createContext({ document: { getElementById: element, querySelector: id => element(id.slice(1)), createElement: tag => ({ tag }) },
-    fetch: fetcher, URL, URLSearchParams, location: { search }, history: { replaceState() {} }, console });
+    fetch: fetcher, URL, URLSearchParams, location: { search, hash: '' }, window: { addEventListener() {} }, history: { replaceState() {} }, console });
   for (const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) vm.runInContext(match[1], context);
   await new Promise(resolve => setImmediate(resolve));
   return { element, html };
@@ -112,7 +112,8 @@ test('real saved cert evidence renders as indexed, not live or physical verifica
   assert.equal(shard.filter(c => c.cert === cert && c.grader === 'PSA').length, 1);
   const p = await page('cleancheck.html', '?cert=' + cert + '&grader=PSA', sources());
   const h = p.element('out').innerHTML;
-  assert.match(h, /Indexed Collector Crypt record found/);
+  assert.match(h, /Matching saved listing found/);
+  assert.match(h, /Current availability and physical ownership have not been checked/);
   assert.match(h, /Collector Crypt saved shard: checked/);
   assert.match(h, /QR-to-cert match: not_checked/);
   assert.match(h, /PSA \/ grader record: not_checked/);
@@ -126,7 +127,8 @@ test('source 404, server failure and malformed JSON shape are not empty all-clea
     const p = await page('cleancheck.html', '?cert=109308847', async url => url.includes('/cc/109') ? bad() : sources()(url));
     const h = p.element('out').innerHTML;
     assert.match(h, /Incomplete source check/);
-    assert.match(h, /Collector Crypt saved shard: not_checked/);
+    assert.match(h, /Saved listing: not_checked — source unavailable/);
+    assert.match(h, /Collector Crypt saved shard: unavailable/);
     assert.match(h, /Gacha Galaxy record found|Gacha Mark/);
     assert.doesNotMatch(h, /verdict clear/);
   }
@@ -137,7 +139,8 @@ test('own-source failure is visible and retried rather than cached as empty', as
     if (url.includes('own-claims') && ++attempts === 1) return response([], 503);
     return sources()(url);
   });
-  assert.match(p.element('out').innerHTML, /Gacha Galaxy saved records: not_checked/);
+  assert.match(p.element('out').innerHTML, /Gacha Mark: not_checked — source unavailable/);
+  assert.match(p.element('out').innerHTML, /Gacha Galaxy saved records: unavailable/);
   p.element('f').events.submit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(attempts, 2);
@@ -161,8 +164,8 @@ test('cert and grader survive handoff; intake is disabled with no checkout', asy
   p.element('remail').value = 'test@example.invalid';
   p.element('rq').events.submit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.match(p.element('rn').textContent, /Request intake unavailable/);
-  assert.match(p.element('rn').textContent, /No request saved, payment collected or Mark issued/);
+  assert.match(p.element('rn').textContent, /Requests are currently unavailable/);
+  assert.match(p.element('rn').textContent, /No request (?:sent|saved), payment collected or Mark issued/);
   assert.equal(p.element('rgo').disabled, true);
   assert.doesNotMatch(p.html, /Pay \$9 now|send a payment link|against the grading authority/);
 });
@@ -174,7 +177,7 @@ test('even a configured response cannot render checkout in this client', async (
     p.element('rq').events.submit({ preventDefault() {} });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(p.element('rn').children.length, 0);
-    assert.match(p.element('rn').textContent, /No request saved, payment collected or Mark issued/);
+    assert.match(p.element('rn').textContent, /No request (?:sent|saved), payment collected or Mark issued/);
   }
 });
 test('injected saved-source instructions remain escaped data, not executable markup', async () => {
@@ -191,13 +194,14 @@ test('unavailable client does not read configured payment or free allowance resp
   p.element('remail').value = 'test@example.invalid';
   p.element('rq').events.submit({ preventDefault() {} });
   await new Promise(resolve => setImmediate(resolve));
-  assert.match(p.element('rn').textContent, /Request intake unavailable/);
+  assert.match(p.element('rn').textContent, /Requests are currently unavailable/);
   assert.equal(p.element('rn').children.length, 0);
 });
 test('same-identifier multiple saved listings do not incorrectly say no claims', async () => {
   const listing = shard.find(c => c.cert === '109863355');
   const p = await page('cleancheck.html', '?cert=109863355&grader=PSA', sources([], [listing, listing]));
-  assert.match(p.element('out').innerHTML, /Indexed Collector Crypt records found/);
+  assert.match(p.element('out').innerHTML, /Matching saved listings found/);
+  assert.match(p.element('out').innerHTML, /do not establish current availability or distinct physical owners/);
   assert.doesNotMatch(p.element('out').innerHTML, /No indexed claims found/);
 });
 
@@ -233,11 +237,11 @@ test('malformed saved rows mark only their source unchecked and preserve the oth
   for (const bad of [[null], [{ cert: listing.cert, grader: {} }], ['not a record']]) {
     const p = await page('cleancheck.html', '?cert=109863355&grader=PSA', sources(bad, [listing]));
     assert.match(p.element('out').innerHTML, /Incomplete source check/);
-    assert.match(p.element('out').innerHTML, /Gacha Galaxy saved records: not_checked/);
+    assert.match(p.element('out').innerHTML, /Gacha Mark: not_checked — source unavailable/);
     assert.match(p.element('out').innerHTML, /Collector Crypt saved shard: checked/);
     assert.match(p.element('out').innerHTML, /Nidoking-Holo/);
     const q = await page('cleancheck.html', '?cert=109863355&grader=PSA', sources([], bad));
-    assert.match(q.element('out').innerHTML, /Collector Crypt saved shard: not_checked/);
+    assert.match(q.element('out').innerHTML, /Saved listing: not_checked — source unavailable/);
   }
 });
 test('saved graders normalize consistently for filtering and handoff', async () => {
@@ -273,7 +277,9 @@ test('same digits under different graders stay separate and explicitly labelled'
     assert.equal(h.includes('CGC saved card'), g !== 'PSA');
     if (g !== 'CGC') assert.match(h, /PSA cert ref 109863355/);
     if (g !== 'PSA') assert.match(h, /CGC cert ref 109863355/);
-    assert.match(h, new RegExp('grader=' + g + '#request'));
+    // A grader-less context must not mint a grader-less request link; it asks for a grader instead.
+    if (g) assert.match(h, new RegExp('grader=' + g + '#request'));
+    else { assert.doesNotMatch(h, /#request/); assert.match(h, /Choose a grader to open a card-specific request/); }
   }
 });
 
@@ -281,7 +287,7 @@ test('missing or unsupported saved grader cannot silently become PSA evidence', 
   const listing = shard.find(c => c.cert === '109863355');
   for (const grader of [null, '', 'OTHER']) {
     const p = await page('cleancheck.html', '?cert=109863355&grader=PSA', sources([], [{ ...listing, grader }]));
-    assert.match(p.element('out').innerHTML, /Collector Crypt saved shard: not_checked/);
+    assert.match(p.element('out').innerHTML, /Saved listing: not_checked — source unavailable/);
     assert.doesNotMatch(p.element('out').innerHTML, /Nidoking-Holo/);
   }
 });
