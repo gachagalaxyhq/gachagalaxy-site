@@ -7,6 +7,9 @@ const page=read('public/platform.html');
 const D=JSON.parse(page.split('const D=')[1].split(';const $=')[0]);
 const shard=JSON.parse(read('public/data/cc/109.json'));
 const listing=shard.find(c=>c.cert==='109863355'&&c.grader==='PSA');
+// Saved ask and listed date move with each Collector Crypt refresh; derive expectations from the shard row.
+const askText='$'+listing.ask.toLocaleString('en-US');
+const listedText=new Date(listing.listed+'T00:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
 async function render(rows=shard,ok=true,changeRoute=false){
  const view={innerHTML:''};
  const location={hash:'#/listing/PSA/109863355'};
@@ -17,15 +20,16 @@ async function render(rows=shard,ok=true,changeRoute=false){
  return view.innerHTML;
 }
 test('Nidoking saved detail does not borrow catalogue PSA 6 evidence',async()=>{
- assert.equal(listing.ask,2600);assert.equal(listing.grade,'NM-MT+ 8.5');
+ assert.ok(listing.ask>0);assert.equal(listing.grade,'NM-MT+ 8.5');
  assert.equal(D.certs.some(c=>c.cert===listing.cert),false);
  const html=await render();
-  for(const s of ['Nidoking-Holo 1st Edition PSA 8.5','$2,600','Insufficient comparisons','No second same-cert listing','No Gacha Mark is available','6 Nov 2026','4xXyL7gFQs4oFm','Grader lookup: not checked','/cleancheck?cert=109863355&amp;grader=PSA'])assert.ok(html.includes(s),s);
+  for(const s of ['Nidoking-Holo 1st Edition PSA 8.5',askText,// Live savedListing copy (was 'Insufficient comparisons' / 'No second same-cert listing' / 'No Gacha Mark is available' / 'Grader lookup: not checked').
+  'No exact card-and-grade comparison available','Matching listings','Recorded asking price, not a completed sale or valuation','Availability, grader status and physical authenticity have not been checked',listedText,'4xXyL7gFQs4oFm','source label, not authentication','Submitting a request does not collect payment or issue a Mark','/cleancheck?cert=109863355&amp;grader=PSA'])assert.ok(html.includes(s),s);
  assert.doesNotMatch(html,/PSA 6|\$50|fair value of|109308847/);
 });
 test('saved detail fails visibly on missing, malformed or unavailable evidence',async()=>{
  for(const [rows,ok] of [[[],true],[null,true],[[null],true],[shard,false]]){
-  const html=await render(rows,ok);assert.match(html,/No matching saved listing|Saved listing evidence unavailable/);assert.doesNotMatch(html,/\$2,600/);
+  const html=await render(rows,ok);assert.match(html,/No matching saved listing|Saved listing evidence unavailable/);assert.ok(!html.includes(askText));
  }
 });
 test('source markup remains escaped in saved detail',async()=>{
@@ -52,12 +56,14 @@ test('client submits through configured intake only, with contact email and no p
  assert.match(intake,/fetch\('\/api\/mark-request',\{method:'POST'/);
  assert.match(html,/<input[^>]+type="email"/);
  assert.doesNotMatch(intake,/createElement|\.href\s*=\s*d\.payUrl/);
- assert.match(html,/id="rgo" disabled/);assert.match(html,/database contract/);
+ // Server-side gating is the contract now; the client starts disabled and only enables on a confirmed GET.
+ assert.match(html,/id="rgo" disabled/);assert.match(intake,/d\.intakeStatus==='available'/);
+ assert.match(html,/Payments are inactive; submitting is not a paid order/);
 });
 test('saved route and handoff navigation are wired into existing pages',()=>{
  assert.match(page,/if\(a==='listing'\)return savedListing/);
   assert.doesNotMatch(page.split('<header class="top">')[1].split('<main>')[0],/Collector journey · Nidoking/);
   assert.match(page,/if\(a==='cards'\)return catalogueBrowse\(\)/);
- const cc=read('public/cleancheck.html');assert.match(cc,/Open saved listing \/ pricing evidence/);assert.match(cc,/intake unavailable →/);
+ const cc=read('public/cleancheck.html');assert.match(cc,/Open saved listing \/ pricing evidence/);assert.match(cc,/Request a Gacha Mark evidence review →|Request an evidence review →/);assert.match(cc,/Payments are inactive/);
  assert.doesNotMatch(page,/8 marketplaces/);
 });

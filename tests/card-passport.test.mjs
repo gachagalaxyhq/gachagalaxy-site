@@ -10,9 +10,11 @@ const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const page=read('public/platform.html');
 const D=JSON.parse(page.split('const D=')[1].split(';const $=')[0]);
 const shard=JSON.parse(read('public/data/cc/109.json'));
+// Saved asks move with each Collector Crypt refresh; assert against the shard row, not a frozen snapshot price.
+const nidoAsk=shard.find(r=>r.grader==='PSA'&&r.cert==='109863355').ask;
 test('saved Nidoking Passport preserves cert ask and absence of image/Mark without fixtures',()=>{
  const p=cardPassport('PSA','109863355',shard,D.certs);
- assert.equal(p.status,'saved');assert.equal(p.listings.length,1);assert.equal(p.listings[0].ask,2600);
+ assert.equal(p.status,'saved');assert.equal(p.listings.length,1);assert.equal(p.listings[0].ask,nidoAsk);
  assert.equal(p.image,null);assert.equal(p.mark,null);assert.equal(p.cleanCheckStatus,'not_run_here');
  assert.equal(p.horizenExecution,'not_checked');assert.equal(p.physicalAuthenticity,'not_checked');
 });
@@ -48,7 +50,7 @@ async function render(cert,rows=shard,ok=true,changeRoute=false){
 }
 test('Passport renders honest absent states and working share-link action',async()=>{
  const {view,button,status}=await render('109863355');
- for(const text of ['class="cimg"','No Gacha Mark in these records','No new check has been run','Live verification has not been performed','$2,600','/cleancheck?cert=109863355','Physical authentication: not performed','does not create a new report or prove authenticity'])assert.ok(view.innerHTML.includes(text),text);
+ for(const text of ['class="cimg"','No Gacha Mark in these records','No new check has been run','Live verification has not been performed','$'+nidoAsk.toLocaleString('en-US'),'/cleancheck?cert=109863355','Physical authentication: not performed','does not create a new report or prove authenticity'])assert.ok(view.innerHTML.includes(text),text);
  await button.onclick();assert.equal(status.textContent,'Passport link copied.');
 });
 test('Passport source failures preserve only separately bundled Mark evidence',async()=>{
