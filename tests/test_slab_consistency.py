@@ -257,7 +257,9 @@ class ConsistencyTests(unittest.TestCase):
             rows.write_text(json.dumps({'filterNFtCard': [dict(gradingCompany='PSA', gradingID='12345678')]}))
             evidence.write_text(json.dumps([dict(cert='12345678', qr_text='https://psacard.com/cert/12345678')]))
             argv = ['checker', '--rows', str(rows), '--qr-evidence', str(evidence), '--output', str(output),
-                    '--csv-output', str(csv_output), '--offline']
+                    '--csv-output', str(csv_output), '--offline',
+                    # Never let the default ~/.secrets/psa_token path be touched, even just resolved.
+                    '--token-file', str(base / 'no-token')]
             with patch.object(sys, 'argv', argv), patch.object(sys, 'stdout', io.StringIO()), \
                  patch.object(m.urllib.request, 'urlopen', side_effect=AssertionError('network')), \
                  patch.object(m.PSAClient, 'lookup', side_effect=AssertionError('lookup')):

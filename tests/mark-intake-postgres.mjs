@@ -166,10 +166,17 @@ test('frontend lost-response retry reaches real handler and retains the committe
   await p.submit();
   assert.match(p.element('rn').textContent,/Request already exists/);
   assert.equal(await sql('select used from mark_intake_private.policy'),'9');
-  // Actual exported production handler remains closed despite approved fixture DB.
-  const production=await intakePage(intakeApi);
-  assert.equal(production.element('rgo').disabled,true);
-  await production.submit();assert.deepEqual(production.calls,['GET']);
+  // Exported production handler: its source gate is open (owner-approved 2026-11-07), so it would
+  // call the production Supabase RPC. Stub transport so no production call can happen, and require
+  // the page to stay closed when the backend is unreachable.
+  const realFetch=globalThis.fetch,productionCalls=[];
+  globalThis.fetch=async url=>{productionCalls.push(String(url));throw new Error('production transport forbidden in tests');};
+  try{
+    const production=await intakePage(intakeApi);
+    assert.equal(production.element('rgo').disabled,true);
+    await production.submit();assert.deepEqual(production.calls,['GET']);
+    assert.ok(productionCalls.every(u=>u.endsWith('/rest/v1/rpc/mark_intake_status_v2')),'only the stubbed status RPC');
+  }finally{globalThis.fetch=realFetch}
   await sql('truncate mark_intake_private.requests; update mark_intake_private.policy set approved=false,legacy_reconciled=false,scope=null,used=null,approval_reference=null');
 });
 
