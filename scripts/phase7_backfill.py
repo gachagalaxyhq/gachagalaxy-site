@@ -233,7 +233,7 @@ insert into phase7_backfill_src values
 {values};
 
 do $$
-declare n integer; drift integer;
+declare n integer; drift integer; src_row record; v_id uuid;
 begin
   if (select count(*) from phase7_backfill_src) <> {EXPECTED_COUNT}
      or (select count(distinct (grader, cert)) from phase7_backfill_src) <> {EXPECTED_COUNT}
@@ -259,25 +259,24 @@ begin
     raise exception 'phase7 backfill: unexpected backfill rows present';
   end if;
 
-  with ins as (
+  for src_row in select * from phase7_backfill_src src
+           where not exists (select 1 from mark_review.reviews rv where rv.origin = 'backfill'
+                             and rv.grader = src.grader and rv.cert = src.cert)
+           order by src.cert loop
     insert into mark_review.reviews (origin, grader, cert, status, tx, chain_id, registry,
       block_number, block_hash, published_at, prepared_sha256, evidence_sha256,
       revoked_reason, decision_reason)
-    select 'backfill', s.grader, s.cert, s.status, s.tx, {CHAIN_ID}, s.registry, s.block_number,
-      s.block_hash, s.published_at, s.prepared_sha256, s.evidence_sha256, s.revoked_reason,
-      'Backfilled from issuance records (pre-queue Mark)'
-    from phase7_backfill_src s
-    where not exists (select 1 from mark_review.reviews rv where rv.origin = 'backfill'
-                      and rv.grader = s.grader and rv.cert = s.cert)
-    returning id, grader, cert, status)
-  insert into mark_review.events (review_id, action, from_status, to_status, actor, actor_kind,
-    idempotency_key, request_sha256, payload, result, version_after)
-  select ins.id, 'backfill', null, ins.status, null, 'migration',
-    md5('phase7:backfill:' || ins.grader || ':' || ins.cert)::uuid, s.record_sha256, s.payload,
-    jsonb_build_object('ok', true, 'review_id', ins.id, 'action', 'backfill',
-                       'status', ins.status, 'version', 1), 1
-  from ins join phase7_backfill_src s using (grader, cert)
-  order by ins.cert;
+    values ('backfill', src_row.grader, src_row.cert, src_row.status, src_row.tx, {CHAIN_ID}, src_row.registry, src_row.block_number,
+      src_row.block_hash, src_row.published_at, src_row.prepared_sha256, src_row.evidence_sha256, src_row.revoked_reason,
+      'Backfilled from issuance records (pre-queue Mark)')
+    returning id into v_id;
+    insert into mark_review.events (review_id, action, from_status, to_status, actor, actor_kind,
+      idempotency_key, request_sha256, payload, result, version_after)
+    values (v_id, 'backfill', null, src_row.status, null, 'migration',
+      md5('phase7:backfill:' || src_row.grader || ':' || src_row.cert)::uuid, src_row.record_sha256, src_row.payload,
+      jsonb_build_object('ok', true, 'review_id', v_id, 'action', 'backfill',
+                         'status', src_row.status, 'version', 1), 1);
+  end loop;
 
   select count(*) into n from mark_review.reviews rv join phase7_backfill_src s
     using (grader, cert, tx) where rv.origin = 'backfill';

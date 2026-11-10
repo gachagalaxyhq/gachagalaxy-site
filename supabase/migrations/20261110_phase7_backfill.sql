@@ -41,7 +41,7 @@ insert into phase7_backfill_src values
   ('PSA', '171402573', 'published', '0x62b1c5896398fe3aeddc547db9fe846fc49081d1f175659a27fc54566a30f521', '0x2a585396dd0248a060045b3f557076fb1b4cb0eb', 150108438, '0x146bcf53b39ee1b2aa7eee88905ce4a7c213f1c17551f5d6e3d4886287417117', '2026-11-07T18:30:18.000Z'::timestamptz, '4cb787a1013174e66ca215ef7215e165c636e2f7e5c3b83e361fd7e3770c225d', 'dba12a6129e29c9c0afb2f9f4c5d4845e3cbfa5262db4db948f6a7ec6549e876', null, 'd8b42cc73f41173cd431269a29616fe8fedf8241452e35e67f60af37795776f4', '{"chain_id":46630,"current_registry":"0x2a585396dd0248a060045b3f557076fb1b4cb0eb","events":[{"block":150108438,"block_hash":"0x146bcf53b39ee1b2aa7eee88905ce4a7c213f1c17551f5d6e3d4886287417117","cert_key":"0x9090bed65d5a80d5dba188d10740e9eb3999a7572584fa09285aa4d80273dddd","gas_used":"100931","high":18.79,"low":14.81,"nonce":28,"point":16.8,"receipt_status":"0x1","registry":"0x2a585396dd0248a060045b3f557076fb1b4cb0eb","t":"2026-11-07T18:30:18.000Z","tx":"0x62b1c5896398fe3aeddc547db9fe846fc49081d1f175659a27fc54566a30f521"}],"evidence_sha256":"dba12a6129e29c9c0afb2f9f4c5d4845e3cbfa5262db4db948f6a7ec6549e876","grader_lookup":"not_checked","issuance_tx":"0x62b1c5896398fe3aeddc547db9fe846fc49081d1f175659a27fc54566a30f521","latest_publish_t":"2026-11-07T18:30:18.000Z","prepared_sha256":"4cb787a1013174e66ca215ef7215e165c636e2f7e5c3b83e361fd7e3770c225d","receipt_checked_at":"2026-11-07T18:30:28.916Z","receipt_source":"operations/additional-marks-receipts.json","receipt_source_sha256":"8db46de12610e7f82b77680ff4f8ca053d857a9291c205a92a8edfdd8cabb42c","receipt_verified":true,"revoked":null,"revoked_source_sha256":"225989258941ee9f319315eae6e43dc68063b569c8e6115e910d0ee0380ad5d6","source":"src/onchain.json","source_sha256":"462938059c1f9b837cbcfe7fdd2974ea038d88a4d6f551238ce5b05e75ebf548"}'::jsonb);
 
 do $$
-declare n integer; drift integer;
+declare n integer; drift integer; src_row record; v_id uuid;
 begin
   if (select count(*) from phase7_backfill_src) <> 18
      or (select count(distinct (grader, cert)) from phase7_backfill_src) <> 18
@@ -67,25 +67,24 @@ begin
     raise exception 'phase7 backfill: unexpected backfill rows present';
   end if;
 
-  with ins as (
+  for src_row in select * from phase7_backfill_src src
+           where not exists (select 1 from mark_review.reviews rv where rv.origin = 'backfill'
+                             and rv.grader = src.grader and rv.cert = src.cert)
+           order by src.cert loop
     insert into mark_review.reviews (origin, grader, cert, status, tx, chain_id, registry,
       block_number, block_hash, published_at, prepared_sha256, evidence_sha256,
       revoked_reason, decision_reason)
-    select 'backfill', s.grader, s.cert, s.status, s.tx, 46630, s.registry, s.block_number,
-      s.block_hash, s.published_at, s.prepared_sha256, s.evidence_sha256, s.revoked_reason,
-      'Backfilled from issuance records (pre-queue Mark)'
-    from phase7_backfill_src s
-    where not exists (select 1 from mark_review.reviews rv where rv.origin = 'backfill'
-                      and rv.grader = s.grader and rv.cert = s.cert)
-    returning id, grader, cert, status)
-  insert into mark_review.events (review_id, action, from_status, to_status, actor, actor_kind,
-    idempotency_key, request_sha256, payload, result, version_after)
-  select ins.id, 'backfill', null, ins.status, null, 'migration',
-    md5('phase7:backfill:' || ins.grader || ':' || ins.cert)::uuid, s.record_sha256, s.payload,
-    jsonb_build_object('ok', true, 'review_id', ins.id, 'action', 'backfill',
-                       'status', ins.status, 'version', 1), 1
-  from ins join phase7_backfill_src s using (grader, cert)
-  order by ins.cert;
+    values ('backfill', src_row.grader, src_row.cert, src_row.status, src_row.tx, 46630, src_row.registry, src_row.block_number,
+      src_row.block_hash, src_row.published_at, src_row.prepared_sha256, src_row.evidence_sha256, src_row.revoked_reason,
+      'Backfilled from issuance records (pre-queue Mark)')
+    returning id into v_id;
+    insert into mark_review.events (review_id, action, from_status, to_status, actor, actor_kind,
+      idempotency_key, request_sha256, payload, result, version_after)
+    values (v_id, 'backfill', null, src_row.status, null, 'migration',
+      md5('phase7:backfill:' || src_row.grader || ':' || src_row.cert)::uuid, src_row.record_sha256, src_row.payload,
+      jsonb_build_object('ok', true, 'review_id', v_id, 'action', 'backfill',
+                         'status', src_row.status, 'version', 1), 1);
+  end loop;
 
   select count(*) into n from mark_review.reviews rv join phase7_backfill_src s
     using (grader, cert, tx) where rv.origin = 'backfill';
