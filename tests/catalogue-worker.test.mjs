@@ -55,7 +55,9 @@ test('rendered integration keeps routes and excludes misleading entire-catalogue
  assert.ok(!page.includes('__CATALOGUE_JS__'));
  assert.ok(page.includes("if(a==='cards')return catalogueBrowse()"));
  assert.ok(page.includes("if(a==='groups')return list()"));
- for(const route of ['listing','passport','cert','scanner','collection','borrowing-pilot'])assert.ok(page.includes("a==='"+route+"'"));
+ for(const route of ['listing','passport','cert','scanner','collection'])assert.ok(page.includes("a==='"+route+"'"));
+ // The borrowing pilot route was removed from the live platform (deployment_guard.py rejects it).
+ assert.ok(!/borrowing-pilot|borrowingPilot\s*\(/.test(page));
  assert.ok(!page.includes('The 8 highest-valued cards listed on Collector Crypt'));
  assert.ok(!page.includes('slabs are certified today'));
  assert.ok(!page.includes('slabs with a Gacha Mark onchain on Robinhood Chain.'));
@@ -71,6 +73,7 @@ test('platform landing opens genuine catalogue; Mark lookup remains explicitly r
   vm.runInContext(routeCode+';route()',context);
   assert.deepEqual(hits,[['#/home','#/lookup'].includes(hash)?'lookup':'catalogue'],hash||'bare platform URL');
  }
- assert.match(page,/href="#\/cards" data-t="cards">Catalogue/);
- assert.match(page,/href="#\/lookup" data-t="home">Mark lookup/);
+ // Live labels: 'Browse cards' tab; Mark lookup is reachable via 'Find a Mark by certificate' on #/certified.
+ assert.match(page,/href="#\/cards" data-t="cards">Browse cards/);
+ assert.match(page,/href="#\/lookup">Find a Mark by certificate</);
 });

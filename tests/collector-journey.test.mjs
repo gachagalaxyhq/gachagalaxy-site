@@ -19,16 +19,17 @@ test('generated scripts parse and scanner implementation remains unchanged from 
 test('primary example has real dated evidence matching card and clean-check shard',()=>{
   const c=D.cards.find(c=>c.i===7),e=evidence.cards['7'];
   assert.equal(c.g,'PSA 10');assert.equal(c.ga,95);assert.equal(e.point,c.ga);
-  assert.equal(e.listings.length,16);assert.equal(evidence.observed_at,'2026-11-06T06:57:12Z');
+  // Listing count and observation time move with each refresh; tie them to the same snapshot as the group.
+  assert.equal(e.listings.length,c.L.length);assert.equal(evidence.observed_at,JSON.parse(read('data/cc.json')).updated);
   const listing=e.listings[0];assert.equal(listing.cert,'129395238');assert.equal(listing.ask,50);
   const shard=JSON.parse(read('public/data/cc/129.json'));
   assert.equal(shard.find(x=>x.cert===listing.cert).ask,listing.ask);
   assert.equal(D.certs.some(c=>c.cert===listing.cert),false);
 });
-test('existing pilot transition has no wallet or transaction implementation',()=>{
-  const section=page.split('function borrowingPilot()')[1].split('const SG=')[0];
-  for(const s of ['109308847','token #1 only','Chain ID 4663','0xa4a98F8A373E98Ce555a7F6e1FF2094C858D8F23','Not confirmed','ShjZm8cE'])assert.ok(section.includes(s),s);
-  assert.doesNotMatch(section,/ethereum\.request|sendTransaction|approve\(|borrow\(/);
+test('removed pilot leaves no wallet or transaction implementation in the platform',()=>{
+  // The borrowing-pilot section was removed from the live platform (deployment_guard.py enforces it).
+  assert.ok(!page.includes('function borrowingPilot()'));
+  assert.doesNotMatch(page,/ethereum\.request|eth_sendTransaction|sendTransaction\(|wallet_addEthereumChain|\bborrow\(/);
 });
 test('actual saved Rayquaza PDF uses sold basis, events and honest provenance',()=>{
   const c=JSON.parse(read('src/certs.json'))[0];

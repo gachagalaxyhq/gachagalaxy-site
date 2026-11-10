@@ -12,14 +12,24 @@ const init=script.slice(0,script.indexOf('if(/access_token=|error_description=/'
 function section(hash){
  const {document,window}=parseHTML(page);
  const location=new URL('https://local.example/platform?saved=1'+hash),calls=[];
+ // Saved view now redirects #/collection to the normal page via location.replace; record, never navigate.
+ location.replace=url=>{location.replaced=String(url)};
  const fetch=async url=>{calls.push(url);assert.ok(String(url).startsWith('/'),'no external source/network calls');const file=path.join(root,'public',String(url).split('?')[0]);return {ok:fs.existsSync(file),json:async()=>JSON.parse(fs.readFileSync(file))}};
  const ctx=vm.createContext({document,window,location,fetch,URLSearchParams,AbortController,AbortSignal,URL,console,setTimeout,clearTimeout,navigator:{},sessionStorage:{getItem:()=>null},history:{replaceState(){}},TextEncoder,crypto:globalThis.crypto});
  window.scrollTo=()=>{};vm.runInContext(init,ctx);
- return {document,calls,run:s=>vm.runInContext(s,ctx),view:()=>document.querySelector('#view')};
+ return {document,calls,location,run:s=>vm.runInContext(s,ctx),view:()=>document.querySelector('#view')};
 }
 test('audited CGC groups keep exact image routes, evidence and explicit reference scope',async()=>{
- for(const [id,name,asset,total,shown] of [[11,'Pikachu','2025092337C49179',13,7],[71,'Venusaur','2025110440C70775',5,3]]){
+ // Group ids/assets move with each Collector Crypt refresh (old ids 11/71 are now other cards), so
+ // pick the decoded CGC groups with checked-in images (Venusaur 2025110440C70775 is still one) and
+ // derive totals from each group's own listings.
+ const D0=JSON.parse(page.split('const D=')[1].split(';const $=')[0]);
+ const picks=D0.cards.filter(c=>c.decoded===true&&/^CGC /.test(c.g||'')&&/^\/cards\/[A-Za-z0-9_-]+\.webp$/.test(c.im||''));
+ assert.ok(picks.some(c=>c.im==='/cards/2025110440C70775.webp'&&c.cn==='Venusaur'));
+ for(const g of picks.slice(0,3)){
+  const id=g.i,name=g.cn,asset=g.im.slice(7,-5),total=g.L.length;
   const a=section('#/card/'+id);await a.run('route()');await new Promise(r=>setTimeout(r,40));
+  const shown=Number(a.view().querySelector('.csum').textContent.match(/· (\d+) shown/)[1]);assert.ok(shown>0&&shown<=total);
   assert.equal(a.view().querySelector('h1').textContent,name);
   assert.equal(a.view().querySelector('.cimg').getAttribute('src'),'/cards/'+asset+'.webp');
   assert.ok(fs.statSync(path.join(root,'public/cards',asset+'.webp')).size>1000);
@@ -36,12 +46,17 @@ test('audited CGC groups keep exact image routes, evidence and explicit referenc
  }
 });
 test('failed CGC evidence has useful empty state without nonexistent cert links',async()=>{
- const a=section('#/card/71');a.run('fetch=async()=>({ok:false})');await a.run('route()');await new Promise(r=>setTimeout(r,10));
+ const a=section('#/card/82'); // decoded CGC Venusaur group (id moved from 71 in the refresh)
+ a.run('fetch=async()=>({ok:false})');await a.run('route()');await new Promise(r=>setTimeout(r,10));
  const evidence=a.view().querySelector('#collector-source');assert.match(evidence.textContent,/Source evidence could not load/);
  assert.doesNotMatch(evidence.textContent,/cert links above/);assert.equal(evidence.querySelector('a').getAttribute('href'),'#/cards');
 });
 test('read-only account views promise neither sign-in email nor previously sent code',async()=>{
- for(const route of ['#/watchlist','#/collection'])for(const step of ['email','code']){
+ // Live: saved-view #/collection redirects to the normal page (?saved dropped) instead of rendering.
+ for(const step of ['email','code']){const a=section('#/collection');a.run(`CS.step=${JSON.stringify(step)};CS.email="test@example.invalid"`);await a.run('route()');
+  assert.equal(a.location.replaced,'https://local.example/platform#/collection');assert.equal(a.view().querySelectorAll('input,form').length,0);
+  assert.doesNotMatch(a.view().textContent,/we will send|We sent|Check your email|Email me/i);}
+ for(const route of ['#/watchlist'])for(const step of ['email','code']){
   const a=section(route);a.run(`CS.step=${JSON.stringify(step)};CS.email="test@example.invalid"`);await a.run('route()');
   const panel=a.view().querySelector('.col-auth');assert.match(panel.textContent,/Sign-in unavailable/);
   assert.doesNotMatch(panel.textContent,/we will send|We sent|Check your email|Email me/i);
@@ -97,14 +112,16 @@ test('Geodude Passport uses same-cert catalogue photo with readable price fields
  assert.match(visible.textContent,/Mark request options/);assert.match(visible.textContent,/MINT 9/);
 });
 const routes=[
- ['#/','Catalogue',40],['#/cards','Catalogue',40],['#/home','Look up a Gacha Mark',0],
+ ['#/','Browse cards',40],['#/cards','Browse cards',40],['#/home','Look up a Gacha Mark',0],
  ['#/lookup','Look up a Gacha Mark',0],['#/groups','Price-comparison groups',0],
- ['#/scanner','Saved price-gap scanner',0],['#/api','Public data',0],
+ ['#/scanner','Price gaps',0],['#/api','Public data',0],
  ['#/certified','Gacha Marks',8],['#/cert/109308847','109308847',0],
  ['#/card/7','Price history',0],['#/listing/PSA/109863355','Listing',0],
  ['#/passport/PSA/109863355','Card Passport',0],
- ['#/watchlist','Watchlist',8],['#/collection','My Collection',8],
- ['#/borrowing-pilot','Borrowing against cards',0]
+ ['#/watchlist','Watchlist',8],
+ // #/collection redirects out of the saved view (covered above); the borrowing pilot route was removed
+ // (scripts/deployment_guard.py rejects it) and unknown routes fall back to Mark lookup.
+ ['#/borrowing-pilot','Look up a Gacha Mark',0]
 ];
 for(const [hash,text,minimum] of routes)test('section renders safely: '+hash,async()=>{
  const a=section(hash);await a.run('route()');await new Promise(r=>setTimeout(r,40));
@@ -120,7 +137,7 @@ for(const [hash,text,minimum] of routes)test('section renders safely: '+hash,asy
  if(hash==='#/scanner'){assert.equal(view.querySelectorAll('tbody tr').length,20);assert.match(view.querySelector('.pricing-source').textContent,/Pricing snapshot/);assert.ok(!view.textContent.includes('Fair value'))}
  if(hash==='#/groups'){assert.equal(view.querySelectorAll('.rowc').length,40);assert.ok(view.querySelector('#group-search'))}
   if(hash==='#/api'){const pre=view.querySelector('#api-sample');const row=JSON.parse(pre.textContent);assert.equal(row.id,'source_id:2026101516C298786');assert.equal(row.scan.status,'decoded');for(const link of view.querySelectorAll('a[href^="/data/"],a[href="/prices.json"]'))assert.ok(fs.existsSync(path.join(root,'public',link.getAttribute('href'))))}
-  if(['#/collection','#/watchlist'].includes(hash)){assert.match(view.textContent,/Catalogue examples, not your/);assert.equal(view.querySelectorAll('.col-auth input,.col-auth button').length,0);assert.ok(!a.calls.some(x=>String(x).includes('supabase')))}
+  if(hash==='#/watchlist'){assert.match(view.textContent,/Catalogue examples, not your/);assert.equal(view.querySelectorAll('.col-auth input,.col-auth button').length,0);assert.ok(!a.calls.some(x=>String(x).includes('supabase')))}
 });
 test('pricing-group search submits and filters real saved groups',async()=>{
  const a=section('#/groups');await a.run('route()');a.document.querySelector('#group-query').value='Charizard';a.document.querySelector('#group-search').onsubmit({preventDefault(){}});
@@ -138,16 +155,20 @@ test('Marks match bundled issued records, with a distinct non-certified catalogu
  assert.equal(preview.querySelectorAll('.catalogue-row').length,8);
  assert.equal(new Set([...preview.querySelectorAll('.catalogue-row')].map(x=>x.getAttribute('href'))).size,8);
  assert.equal(preview.querySelectorAll('.ccard,.mark-tag,.seal-sm').length,0);
- for(const row of preview.querySelectorAll('.catalogue-row')){assert.match(row.textContent,/Listing only/);assert.doesNotMatch(row.textContent,/certified|onchain/i);assert.ok(row.getAttribute('href').startsWith('#/catalogue/'))}
+ // Live: preview is a separate 'Browse more cards' section explicitly 'separate from the Gacha Mark records above' (tile 'Listing only' label removed).
+ assert.match(preview.textContent,/separate from the Gacha Mark records above/);
+ for(const row of preview.querySelectorAll('.catalogue-row')){assert.match(row.textContent,/saved ask|Ask not supplied/);assert.doesNotMatch(row.textContent,/certified|onchain/i);assert.ok(row.getAttribute('href').startsWith('#/catalogue/'))}
  assert.equal(a.view().querySelector('h1').textContent,'Gacha Marks');
  assert.doesNotMatch(a.view().textContent,/currently loaded feed|chain-wide issuance|non-revoked/);
  assert.doesNotMatch(page,/have saved scan evidence; .*not processed|__CATALOGUE_JS__/);
 });
-test('all nav sections map to existing handlers and borrowing implementation is not replaced',()=>{
+test('all nav sections map to existing handlers and the removed borrowing pilot stays removed',()=>{
  const {document}=parseHTML(page);const links=[...document.querySelectorAll('.tabs a')].map(a=>a.getAttribute('href'));
- assert.deepEqual(links,['#/cards','#/lookup','#/scanner','#/certified','#/api','#/watchlist','#/collection','/check']);
- for(const hash of links.filter(x=>x.startsWith('#')))assert.ok(routes.some(r=>r[0]===hash));
- assert.ok(page.includes('function borrowingPilot()'));
+ // Live nav (Mark lookup moved to a 'Find a Mark by certificate' link on #/certified; watchlist dropped from tabs).
+ assert.deepEqual(links,['#/cards','#/certified','/check','/cleancheck','#/scanner','#/collection','#/api']);
+ for(const hash of links.filter(x=>x.startsWith('#')&&x!=='#/collection'))assert.ok(routes.some(r=>r[0]===hash));
+ assert.match(page,/href="#\/lookup">Find a Mark by certificate</);
+ assert.doesNotMatch(page,/borrowing-pilot|borrowingPilot\s*\(/);
 });
 test('shared header keeps compact Price Check and hides global search only on catalogue',async()=>{
  const a=section('#/cards');await a.run('route()');
@@ -166,14 +187,13 @@ test('shared header keeps compact Price Check and hides global search only on ca
  }
  assert.equal(a.document.querySelector('footer .fb span').textContent,'© 2026 GACHA GALAXY LABS INC.');
 });
-test('pilot stays view-only with historical evidence and distinct mainnet/testnet records',async()=>{
+test('removed borrowing pilot route falls back to lookup with no wallet/transaction surface',async()=>{
+ // The view-only pilot section was removed from the live platform; the old URL must not resurrect it.
  const a=section('#/borrowing-pilot');await a.run('route()');const view=a.view();
- assert.equal(view.querySelector('h1').textContent,'Borrowing against cards');
- for(const text of ['109308847','token #1','Chain ID 4663','0xa4a98F8A373E98Ce555a7F6e1FF2094C858D8F23','have not been confirmed','saved testnet record, separate from this mainnet pilot','recording is historical','do not connect, deposit, approve, borrow, repay or withdraw.'])assert.ok(view.textContent.includes(text),text);
- assert.equal(view.querySelectorAll('button,input,form').length,0);
- assert.equal(view.querySelector('details').hasAttribute('open'),false);
- assert.deepEqual(a.calls,[]);
- assert.ok(view.querySelector('a[href="#/cert/109308847"]'));
+ assert.equal(view.querySelector('h1').textContent,'Look up a Gacha Mark.');
+ assert.doesNotMatch(view.textContent,/Borrowing against cards|deposit|borrow|repay/i);
+ assert.doesNotMatch(page,/ethereum\.request|eth_sendTransaction|wallet_addEthereumChain/);
+ assert.ok(a.calls.every(u=>String(u).startsWith('/')));
  assert.match(a.run('JSON.stringify(D.certs.find(c=>c.cert==="109308847").ev)'),/46630/);
 });
 test('group browse, featured previews and scanner only select saved decoded source listings',async()=>{
@@ -193,7 +213,9 @@ test('featured comparisons use exact decoded source image routes and simple save
  const a=section('#/lookup');await a.run('route()');await new Promise(r=>setTimeout(r,40));
  const source=JSON.parse(fs.readFileSync(path.join(root,'data/cc.json'))).cards;
  const groups=JSON.parse(a.run('JSON.stringify(D.cards)'));
- const tiles=[...a.view().querySelectorAll('#featured-cards .mac')];assert.equal(tiles.length,4);
+ // Featured set = flagged, decoded groups with a checked-in image (up to 8); its size follows the data refresh (was 4, now 2).
+ const expected=groups.filter(c=>c.f&&c.decoded===true&&/^\/cards\/[A-Za-z0-9_-]+\.webp$/.test(c.im||'')).slice(0,8);
+ const tiles=[...a.view().querySelectorAll('#featured-cards .mac')];assert.ok(tiles.length>=1);assert.equal(tiles.length,expected.length);
  for(const tile of tiles){
   const group=groups.find(c=>c.i===Number(tile.getAttribute('href').split('/').at(-1)));
   const record=source[group.i-1],listing=group.L.find(l=>l[7]===record.id&&l[6]===true);
@@ -204,7 +226,7 @@ test('featured comparisons use exact decoded source image routes and simple save
   assert.doesNotMatch(tile.textContent,/decoded|pricing inputs|Saved group/i);
  }
  a.run('imageUnavailable(document.querySelector("#featured-cards .mac img"))');
- assert.equal(a.view().querySelectorAll('#featured-cards .mac').length,3);
+ assert.equal(a.view().querySelectorAll('#featured-cards .mac').length,tiles.length-1);
  assert.equal(a.view().querySelectorAll('#featured-cards .ph-img').length,0);
  a.run('D.cards.forEach(c=>{if(c.f)c.im=null})');await a.run('home()');
  assert.equal(a.view().querySelectorAll('#featured-cards .mac').length,0,'missing images excluded before rendering');

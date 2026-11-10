@@ -7,7 +7,7 @@ test('Price Check names the standalone page, metadata, navigation and accessible
  const html=read('public/check.html');
  assert.match(html,/<title>Price Check — graded Pokémon card sold prices \| Gacha Galaxy<\/title>/);
  assert.match(html,/<meta name="description" content="Price Check:/);
- assert.match(html,/<h1>Price Check<\/h1>/);
+ assert.match(html,/<h1 id="price-title">Price Check<\/h1>/); // h1 gained an id (aria-labelledby target)
  assert.match(html,/aria-current="page">Price Check<\/a>/);
  assert.match(html,/role="search" aria-label="Price Check"/);
  assert.match(html,/aria-label="Card name for Price Check"/);
@@ -33,13 +33,14 @@ test('pricing entry links use Price Check across source templates and rendered p
 
 test('other products and generic check actions retain their identities',()=>{
  const clean=read('public/cleancheck.html');
- assert.match(clean,/<h1>Clean Check<\/h1>/);
+ assert.match(clean,/<h1 id="check-title">Clean Check<\/h1>/); // h1 gained an id
  assert.match(clean,/<button type="submit" id="go">Check<\/button>/);
  for(const path of ['src/platform.tpl.html','public/platform.html']){
   const html=read(path);
   assert.match(html,/Card Passport/);
   assert.doesNotMatch(html,/Implementation note:|fixture preview remain/);
-  assert.match(html,/if\(a==='borrowing-pilot'\)return borrowingPilot\(\)/);
+  // Borrowing pilot route removed from the live platform (deployment_guard.py rejects it).
+  assert.doesNotMatch(html,/borrowing-pilot|borrowingPilot\s*\(/);
   const header=html.split('<header class="top">')[1].split('<main>')[0];
   assert.doesNotMatch(header,/Collector Crypt|Pricing groups|Collector journey|Separate existing borrowing pilot/);
   assert.match(html,/Check your email/);

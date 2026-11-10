@@ -22,7 +22,10 @@ test('saved Mark detail uses human copy and collapses all check diagnostics',asy
  assert.equal(fields['Physical authentication'],'Not performed');assert.equal(fields['Live chain status'],'Not checked in saved view');
  assert.match(fields['Review period'],/publication window, not live chain validation/);
  assert.equal(a.document.querySelector('#mkcc'),null);
- assert.match(a.document.querySelector('.cert').textContent,/Recorded evidence; not a physical authentication/);
+ // Live: the visible card no longer carries 'Recorded evidence; not a physical authentication'; the
+ // explicit disclaimer is below the card and in the collapsed diagnostics (asserted above).
+ assert.match(a.document.querySelector('#view').textContent,/This page displays a record, not a new grader check\. It does not prove physical authenticity, ownership or custody\./);
+ assert.match(details.textContent,/No new grader check or physical inspection/);
  details.remove();
  assert.doesNotMatch(a.document.querySelector('.cert').textContent,/not_checked|saved.record mode|database record|days left|refresh due|Grader lookup|QR comparison|Physical authentication: not performed/i);
  assert.ok(a.calls.every(u=>u.startsWith('/data/')),'saved view makes no live chain call');
