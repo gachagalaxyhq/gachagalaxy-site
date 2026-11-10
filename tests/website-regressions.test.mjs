@@ -83,9 +83,12 @@ test('price query behavior stays unchanged and makes no additional calls',async(
 test('real 13-digit CGC record survives validation of the entire stored shard and renders actual evidence',async()=>{
  const b=boot('public/cleancheck.html','?cert=001401-015-277-013&grader=CGC');await settle();
  const out=b.elements.get('out').innerHTML;
- assert.match(out,/Indexed Collector Crypt record found/);
- assert.match(out,/Venusaur CGC 10 Pristine/);assert.match(out,/Claims found \(1\)/);
- assert.match(out,/Asking \$81/);assert.match(out,/CGC cert ref 1401015277013/);
+ // Live wording: 'Matching saved listing found' / 'Matching records (N)' (was 'Indexed Collector Crypt record found' / 'Claims found').
+ assert.match(out,/Matching saved listing found/);assert.match(out,/Saved listing: found — 1 saved record/);
+ assert.match(out,/Venusaur CGC 10 Pristine/);assert.match(out,/Matching records \(1\)/);
+ // Saved ask moves with each Collector Crypt refresh (81 -> 101.95); assert the shard's own value as rendered (whole dollars).
+ const venusaur=JSON.parse(read('public/data/cc/140.json')).find(r=>r.grader==='CGC'&&r.cert==='1401015277013');
+ assert.ok(out.includes('Asking $'+Number(venusaur.ask).toLocaleString('en-US',{maximumFractionDigits:0})));assert.match(out,/CGC cert ref 1401015277013/);
  assert.match(out,/Collector Crypt saved shard: checked/);assert.doesNotMatch(out,/Incomplete source check/);
  assert.match(out,/\/listing\/CGC\/1401015277013/);
  assert.equal(b.context.lastURL,'?cert=1401015277013&grader=CGC');
@@ -97,7 +100,7 @@ test('grader-aware lookup rejects 13-digit PSA, supports any-grader CGC and norm
  assert.equal(psa.calls.some(c=>c.url==='/data/cc/140.json'),false);
  for(const query of ['?cert=1401015277013','?cert=109308847&grader=PSA']){
   const b=boot('public/cleancheck.html',query);await settle();
-  assert.match(b.elements.get('out').innerHTML,/Claims found/);
+  assert.match(b.elements.get('out').innerHTML,/Matching records \(\d+\)/);
   assert.doesNotMatch(b.elements.get('out').innerHTML,/Incomplete source check|\/passport\/\//);
  }
 });
@@ -141,7 +144,8 @@ test('homepage and template keep six featured PSA 10s instead of claiming a regi
  const source=JSON.parse(read('src/certs.json'));
  assert.equal(source.length,18);assert.equal(new Set(source.map(c=>c.grader+'/'+c.cert)).size,18);
  for(const file of ['public/index.html','src/index.tpl.html']){
-  const html=read(file);assert.match(html,/Six featured records/);assert.match(html,/Featured records/);
+  // Live wording: the register heading is 'Eighteen published records' (was 'Six featured records'); tie the count to src/certs.json.
+  const html=read(file);assert.match(html,/Eighteen published records/);assert.equal(source.length,18);assert.match(html,/Featured records/);
   assert.doesNotMatch(html,/slabs are certified today|Six real PSA 10 slabs|Certificates onchain/);
   const script=scripts(html).join('\n');
   const featured=JSON.parse(script.match(/(?:let|const) CERTS=(\[[\s\S]*?\]);/)[1]);
@@ -152,6 +156,19 @@ test('homepage and template keep six featured PSA 10s instead of claiming a regi
   const ctx=vm.createContext({CERTS:structuredClone(featured),rows:source.map(c=>({...c,card_name:c.name})),otb(){},$:s=>({value:'',innerHTML:''}),vcard(){return ''}});
   vm.runInContext(refresh,ctx);assert.equal(ctx.CERTS.length,6);
   assert.deepEqual(Array.from(ctx.CERTS,c=>c.cert),featured.map(c=>c.cert));
+ }
+});
+// KNOWN PRODUCT BUG (reported, not fixed here): the homepage claims all eighteen records are PSA 10,
+// but src/certs.json has PSA 9/PSA 7 entries, and the inline lookup only knows the six featured
+// records, so 12 of the 18 'Featured Mark records' buttons report 'not among the eighteen'.
+test('homepage register copy and lookup agree with the eighteen published records',{todo:'product bug: "all PSA 10" copy and 6-record lookup vs 18 published records'},()=>{
+ const source=JSON.parse(read('src/certs.json'));
+ for(const file of ['public/index.html','src/index.tpl.html']){
+  const html=read(file);
+  if(/all PSA 10/.test(html))assert.ok(source.every(c=>c.grade==='PSA 10'),file+': "all PSA 10" contradicts src/certs.json grades');
+  const featured=JSON.parse(scripts(html).join('\n').match(/(?:let|const) CERTS=(\[[\s\S]*?\]);/)[1]);
+  const buttons=[...html.matchAll(/<div class="try">[\s\S]*?<\/div>/g)][0][0].match(/data-c="(\d+)"/g).map(x=>x.slice(8,-1));
+  assert.deepEqual(buttons.filter(c=>!featured.some(f=>f.cert===c)),[],file+': featured buttons the lookup cannot show');
  }
 });
 test('all shipped inline website scripts compile',()=>{
