@@ -203,6 +203,14 @@ begin
   if tg_op = 'DELETE' then
     raise exception using errcode = '42501', message = 'reviews cannot be deleted';
   end if;
+  if tg_op = 'INSERT' then
+    -- Only the owner-run backfill may create a row in a non-initial state.
+    if new.origin <> 'backfill' and (new.status <> 'queued' or new.version <> 1
+       or new.tx is not null or new.approved_by is not null) then
+      raise exception using errcode = '42501', message = 'new reviews start queued';
+    end if;
+    return new;
+  end if;
   if new.id <> old.id or new.grader <> old.grader or new.cert <> old.cert
      or new.origin <> old.origin or new.request_id is distinct from old.request_id
      or new.reopened_from is distinct from old.reopened_from then
@@ -221,7 +229,7 @@ begin
   end if;
   return new;
 end $$;
-create trigger reviews_guard before update or delete on mark_review.reviews
+create trigger reviews_guard before insert or update or delete on mark_review.reviews
   for each row execute function mark_review.reviews_guard();
 
 -- ---------------------------------------------------------------- auth helpers
