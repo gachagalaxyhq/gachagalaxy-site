@@ -3,9 +3,10 @@
   "private": true,
   "description": "Gacha Galaxy public site. No build step; this file only pins local test dependencies.",
   "scripts": {
-    "test": "npm run test:node && npm run test:py",
-    "test:node": "node --test tests/*.test.mjs",
-    "test:py": "python3 -m pytest -q tests"
+    "test": "npm run test:node && npm run test:pg && npm run test:py",
+    "test:node": "MARK_TEST_PGLITE=$PWD/node_modules/@electric-sql/pglite/dist/index.js node --test tests/*.test.mjs tests/price-check-rehearsal.mjs",
+    "test:pg": "MARK_TEST_POSTGRES_BIN=${MARK_TEST_POSTGRES_BIN:-/usr/lib/postgresql/16/bin} node --test tests/mark-intake-postgres.mjs tests/mark-import-postgres.mjs",
+    "test:py": "python3 -m pytest -q -p no:cacheprovider tests"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.16",
