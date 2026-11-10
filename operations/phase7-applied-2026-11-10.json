@@ -1,0 +1,15 @@
+{
+  "reviews": 18,
+  "bad_chains": 0,
+  "any_flag_on": false,
+  "staff_rows": 2,
+  "applied_at": "2026-11-10T09:34Z",
+  "project": "jknodjsmpjwocpljnohc",
+  "migrations": [
+    "20261110_phase7_review_queue.sql",
+    "20261110_phase7_backfill.sql",
+    "seeds/phase7_seed_first_admin.sql (matthew@gachagalaxy.io, admin+reviewer)"
+  ],
+  "rehearsal": "full apply rehearsed in rolled-back transaction on production first; identical results",
+  "intake_unchanged": true
+}
