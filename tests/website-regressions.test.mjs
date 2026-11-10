@@ -140,7 +140,7 @@ test('availability and limits copy avoids stale unavailable intake and raw inter
   assert.match(html,/not complimentary|not free/);assert.match(html,/payments are inactive/i);
  }
 });
-test('homepage and template keep six featured PSA 10s instead of claiming a register total',()=>{
+test('homepage and template embed all eighteen published records with their real grades',()=>{
  const source=JSON.parse(read('src/certs.json'));
  assert.equal(source.length,18);assert.equal(new Set(source.map(c=>c.grader+'/'+c.cert)).size,18);
  for(const file of ['public/index.html','src/index.tpl.html']){
@@ -149,19 +149,19 @@ test('homepage and template keep six featured PSA 10s instead of claiming a regi
   assert.doesNotMatch(html,/slabs are certified today|Six real PSA 10 slabs|Certificates onchain/);
   const script=scripts(html).join('\n');
   const featured=JSON.parse(script.match(/(?:let|const) CERTS=(\[[\s\S]*?\]);/)[1]);
-  assert.equal(featured.length,6);assert.ok(featured.every(c=>c.grade==='PSA 10'));
+  assert.equal(featured.length,18);assert.ok(featured.every(c=>source.some(s=>s.cert===c.cert&&s.grade===c.grade)));
   assert.ok(featured.every(c=>source.some(s=>s.cert===c.cert&&s.grader==='PSA')));
   const start=script.indexOf('const L=CERTS.map');
   const refresh=script.slice(start,script.indexOf('  otb();',start));
   const ctx=vm.createContext({CERTS:structuredClone(featured),rows:source.map(c=>({...c,card_name:c.name})),otb(){},$:s=>({value:'',innerHTML:''}),vcard(){return ''}});
-  vm.runInContext(refresh,ctx);assert.equal(ctx.CERTS.length,6);
+  vm.runInContext(refresh,ctx);assert.equal(ctx.CERTS.length,18);
   assert.deepEqual(Array.from(ctx.CERTS,c=>c.cert),featured.map(c=>c.cert));
  }
 });
 // KNOWN PRODUCT BUG (reported, not fixed here): the homepage claims all eighteen records are PSA 10,
 // but src/certs.json has PSA 9/PSA 7 entries, and the inline lookup only knows the six featured
 // records, so 12 of the 18 'Featured Mark records' buttons report 'not among the eighteen'.
-test('homepage register copy and lookup agree with the eighteen published records',{todo:'product bug: "all PSA 10" copy and 6-record lookup vs 18 published records'},()=>{
+test('homepage register copy and lookup agree with the eighteen published records',()=>{
  const source=JSON.parse(read('src/certs.json'));
  for(const file of ['public/index.html','src/index.tpl.html']){
   const html=read(file);
