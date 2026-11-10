@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import re
+import subprocess
 import unittest
 import sys
 from PIL import Image
@@ -103,8 +104,17 @@ class ActualPreparation(unittest.TestCase):
             self.assertEqual(r['checks']['live_grader'], 'not_checked')
             self.assertEqual(r['checks']['authentication'], 'not_determined')
             self.assertEqual(r['checks']['sales_comps'], 'missing')
+        # The batch is a dated preparation artifact (its six records were later issued and data/cc.json
+        # is refreshed on a schedule), so inputs may legitimately have moved on. Each recorded digest must
+        # still resolve to a real tracked revision of that file: the current tree or its git history.
         for p, expected in b['inputs_sha256'].items():
-            self.assertEqual(hashlib.sha256((ROOT/p).read_bytes()).hexdigest(), expected, p)
+            if hashlib.sha256((ROOT/p).read_bytes()).hexdigest() == expected:
+                continue
+            revs = subprocess.run(['git', '-C', str(ROOT), 'log', '--all', '--format=%H', '--', p],
+                                  capture_output=True, text=True, check=True).stdout.split()
+            found = any(hashlib.sha256(subprocess.run(['git', '-C', str(ROOT), 'show', f'{r}:{p}'],
+                        capture_output=True, check=True).stdout).hexdigest() == expected for r in revs)
+            self.assertTrue(found, f'{p}: recorded input digest matches no tracked revision')
 
 
 if __name__ == '__main__':

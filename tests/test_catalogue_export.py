@@ -12,10 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('exporter', ROOT / 'scripts/export_cc_catalogue.py')
 exporter = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(exporter)
-SOURCE = Path('/tmp/opencode/cc_catalogue_audit_by_id/audit.sqlite')
+import os
+# The private audit database (raw listings incl. owners/QR URLs) is intentionally not in the repo.
+SOURCE = Path(os.environ.get('CC_AUDIT_SQLITE', '/tmp/opencode/cc_catalogue_audit_by_id/audit.sqlite'))
 
 
 class PublicCatalogue(unittest.TestCase):
+    @unittest.skipUnless(SOURCE.is_file(), 'private Collector Crypt audit.sqlite is not tracked (raw owner/QR data); '
+                         'set CC_AUDIT_SQLITE to run the full source-vs-export comparison')
     def test_full_export_matches_source_and_only_public_projection(self):
         m = json.loads((ROOT / 'public/data/catalogue/manifest.json').read_text())
         base = ROOT / 'public' / m['base_url'].lstrip('/')

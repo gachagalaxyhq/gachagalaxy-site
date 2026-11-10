@@ -14,7 +14,12 @@ class FeaturedImages(unittest.TestCase):
         source = json.loads((ROOT / 'data/cc.json').read_text())
         evidence = json.loads((ROOT / 'public/data/collector-evidence.json').read_text())
         self.assertEqual(evidence['observed_at'], source['updated'])
-        for number, name, asset in [(11, 'Pikachu', '2025092337C49179'), (71, 'Venusaur', '2025110440C70775')]:
+        # Group numbers move with each Collector Crypt refresh (old 11/71 are now other cards). Audit every
+        # decoded CGC group that ships a local asset; Venusaur 2025110440C70775 must remain one of them.
+        audited = [(c['i'], c['cn'], c['im'][len('/cards/'):-len('.webp')]) for c in payload['cards']
+                   if c['decoded'] and c['g'].startswith('CGC ') and (c['im'] or '').startswith('/cards/')]
+        self.assertIn('2025110440C70775', [a for _, _, a in audited])
+        for number, name, asset in audited:
             card = next(c for c in payload['cards'] if c['i'] == number)
             original = source['cards'][number-1]
             self.assertTrue(card['decoded'])
@@ -25,7 +30,9 @@ class FeaturedImages(unittest.TestCase):
             self.assertEqual(evidence['cards'][str(number)], {key: original[key] for key in ('name', 'set', 'grade', 'point', 'listings')})
             with Image.open(ROOT / 'public/cards' / (asset + '.webp')) as image:
                 image.load()
-                self.assertEqual(image.size, (299, 504))
+                self.assertGreater(image.width, 100); self.assertGreater(image.height, 100)
+                if asset == '2025110440C70775':
+                    self.assertEqual(image.size, (299, 504))
 
     def test_exact_featured_assets_are_readable_and_decoded(self):
         page = (ROOT / 'public/platform.html').read_text()
@@ -40,8 +47,15 @@ class FeaturedImages(unittest.TestCase):
             for row in rows:
                 if row['id'].removeprefix('source_id:') in wanted:
                     matches[row['id'].removeprefix('source_id:')] = row
-        for card in (c for c in payload['cards'] if c['decoded'] and c['f']):
+        featured = [c for c in payload['cards'] if c['decoded'] and c['f']]
+        self.assertTrue(any(c['im'] for c in featured))
+        for card in featured:
             record = source[card['i'] - 1]
+            # prepare_collector.matching_image never substitutes another card's photo: with no checked-in
+            # asset for this exact listing the image is None (and featuredGroups() hides the tile).
+            if not (ROOT / 'public/cards' / (record['id'] + '.webp')).is_file():
+                self.assertIsNone(card['im'], card['cn'])
+                continue
             self.assertEqual(card['im'], '/cards/' + record['id'] + '.webp')
             row = matches[record['id']]
             self.assertTrue(row['scan']['processed'])

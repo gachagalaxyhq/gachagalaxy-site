@@ -11,7 +11,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUTS = ("scripts/render.py", "data/cc.json", "src/certs.json", "src/onchain.json",
-          "src/platform.tpl.html", "src/index.tpl.html", "src/chaincheck.js", "src/markpdf.js", "src/card-passport.js")
+          "src/platform.tpl.html", "src/index.tpl.html", "src/chaincheck.js", "src/markpdf.js", "src/card-passport.js",
+          # render.py now also inlines the catalogue UI and derives decoded selections from public shards.
+          "scripts/build_decoded_catalogue.py", "src/catalogue.js", "src/catalogue-worker.js")
+# Read-only catalogue snapshot (~70 MB); linked, never copied or written by render.py.
+CATALOGUE = "public/data/catalogue"
 
 
 def digest(path):
@@ -36,6 +40,14 @@ class RenderSnapshotTests(unittest.TestCase):
                 destination = root / name
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT / name, destination)
+            # build_decoded_catalogue writes decoded.json, so copy the small files into the disposable
+            # tree and only symlink the read-only snapshot shards; nothing in the real tree is writable.
+            (root / CATALOGUE).mkdir(parents=True)
+            for small in ("manifest.json", "decoded.json"):
+                shutil.copyfile(ROOT / CATALOGUE / small, root / CATALOGUE / small)
+            base = json.loads((ROOT / CATALOGUE / "manifest.json").read_text())["base_url"].strip("/").split("/")[-1]
+            (root / CATALOGUE / base).symlink_to(ROOT / CATALOGUE / base, target_is_directory=True)
+            catalogue_before = {p.name: digest(p) for p in (ROOT / CATALOGUE).glob("*.json")}
             cc_path = root / "data/cc.json"
             cc = json.loads(cc_path.read_text())
             # Asset existence, not a stale deployed origin, controls catalogue routing.
@@ -50,10 +62,12 @@ class RenderSnapshotTests(unittest.TestCase):
                     listing["ask"] = 98765.43
             cc_path.write_text(json.dumps(cc))
             # Any accidental network use is a hard failure, not a live API request.
-            runner = ("import runpy,socket; "
+            # sys.path mirrors `python3 scripts/render.py` (render.py imports sibling build_decoded_catalogue).
+            runner = ("import runpy,socket,sys; sys.path.insert(0,'scripts'); "
                       "socket.socket=lambda *a,**k: (_ for _ in ()).throw(RuntimeError('network forbidden')); "
                       "runpy.run_path('scripts/render.py',run_name='__main__')")
-            subprocess.run([sys.executable, "-c", runner], cwd=root, check=True, capture_output=True, text=True)
+            rr = subprocess.run([sys.executable, "-c", runner], cwd=root, capture_output=True, text=True)
+            self.assertEqual(rr.returncode, 0, rr.stderr[-2000:])
             page = (root / "public/platform.html").read_text()
             payload, _ = json.JSONDecoder().raw_decode(page.split("const D=", 1)[1])
             assert_snapshot(self, payload, certs, onchain)
@@ -66,6 +80,7 @@ class RenderSnapshotTests(unittest.TestCase):
             self.assertEqual(own[0]['when'], max(e['t'] for e in certs[0]['ev']))
             self.assertTrue(all(row['source'] == 'mark' for row in own))
             self.assertTrue(all(c["ga"] == 98765.43 for c in payload["cards"]))
+            self.assertEqual(catalogue_before, {p.name: digest(p) for p in (ROOT / CATALOGUE).glob("*.json")})
             self.assertEqual(digest(root / "src/certs.json"), before["src/certs.json"])
             self.assertEqual(digest(root / "src/onchain.json"), before["src/onchain.json"])
             # Prove the guard catches the specific historical failure mode.
@@ -82,9 +97,12 @@ class RenderSnapshotTests(unittest.TestCase):
     def test_authoritative_sold_bands_match_latest_cached_chain_events(self):
         certs = json.loads((ROOT / "src/certs.json").read_text())
         events = json.loads((ROOT / "src/onchain.json").read_text())["events"]
+        # The original six Marks use the sold-sales basis; the twelve robinhood-testnet additions were
+        # published on the saved-asks basis (labelled as asks, "not completed sales", in platform.html).
+        # Every Mark's band must still equal its latest cached chain event.
         for c in certs:
             with self.subTest(cert=c["cert"]):
-                self.assertEqual(c["price_basis"], "psa10-sold")
+                self.assertEqual(c["price_basis"], "asks" if c.get("network") == "robinhood-testnet" else "psa10-sold")
                 latest = max(events[c["cert"]], key=lambda e: e["t"])
                 self.assertEqual([c[k] for k in ("low", "point", "high")],
                                  [latest[k] for k in ("low", "point", "high")])
