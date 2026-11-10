@@ -65,7 +65,9 @@ test('context-only arrival leaves cert and grader unselected and runs no certifi
 });
 test('saved listing has explicit coverage and secondary request, not an all-clear',async()=>{
   const b=await boot('cleancheck','?cert='+listing.cert+'&grader=PSA');const h=b.el('out').innerHTML;
-  for(const text of ['Saved listing: found — 1 saved record','Gacha Mark: not_found','Grader lookup: not_checked','QR-to-cert comparison: not_checked','Private cross-platform matching: not_checked — planned, not live','Physical authenticity: not_checked','Asking $2,600','Source date 2026-11-06'])assert.ok(h.includes(text),text);
+  for(const text of ['Saved listing: found — 1 saved record','Gacha Mark: not_found','Grader lookup: not_checked','QR-to-cert comparison: not_checked','Private cross-platform matching: not_checked — planned, not live','Physical authenticity: not_checked',
+    // Ask/date follow the saved shard row (they move with each Collector Crypt refresh).
+    'Asking $'+listing.ask.toLocaleString('en-US'),'Source date '+listing.listed])assert.ok(h.includes(text),text);
   assert.match(h,/Request a Gacha Mark evidence review/);assert.doesNotMatch(h,/class="result-action"|verdict clear/);
   assert.match(h,/<details class="meta"><summary>Record source<\/summary>Collector Crypt/);
 });
@@ -127,7 +129,8 @@ test('navigation and inactive payment behavior stay intact with no auth or check
 });
 
 test('real browser completes local connected flow with no external transport or mobile overflow',async()=>{
-  const require=createRequire('/tmp/opencode/mark-review-isolated/package.json');
+  // Pinned devDependencies in this repo (puppeteer-core 25.16.0, @sparticuz/chromium 153.0.0); was an out-of-repo /tmp path.
+  const require=createRequire(new URL('../package.json',import.meta.url));
   const puppeteer=require('puppeteer-core'),chromium=require('@sparticuz/chromium').default;
   const server=http.createServer((req,res)=>{
     const u=new URL(req.url,'http://local.invalid');res.setHeader('content-type',u.pathname.startsWith('/api/')||u.pathname.endsWith('.json')?'application/json':'text/html');

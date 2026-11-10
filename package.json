@@ -8,8 +8,11 @@
     "test:py": "python3 -m pytest -q tests"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.16",
+    "@sparticuz/chromium": "153.0.0",
     "ethers": "6.17.0",
     "jspdf": "2.5.2",
-    "linkedom": "^0.18.15"
+    "linkedom": "^0.18.15",
+    "puppeteer-core": "25.16.0"
   }
 }

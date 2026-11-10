@@ -3,9 +3,21 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {parseHTML} from '/tmp/opencode/catalogue-test-deps/node_modules/linkedom/esm/index.js';
-import {ethers} from '/tmp/opencode/pub/node_modules/ethers/lib.esm/index.js';
-const html=fs.readFileSync(new URL('../operations/mark-signing.html',import.meta.url),'utf8');
+import {parseHTML} from 'linkedom';
+import {ethers} from 'ethers';
+// operations/mark-signing.html is a generated, gitignored artifact (removed from the public release
+// in c7fd311). Build the same page in memory from the tracked template + prepared batch exactly as
+// scripts/build_mark_signing_handoff.py does, without writing the artifact back to disk.
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const batch=JSON.parse(read('data/additional-mark-preparation.json'));
+assert.equal(batch.records.length,6);assert.equal(batch.actual_new_issuance,0);
+const payload={chain:batch.chain,validation:{...batch.readonly_chain_validation},records:batch.records};
+delete payload.validation.complete_event_history;
+// Python json.dumps(ensure_ascii=True) equivalent for the embedded batch.
+const embedded=JSON.stringify(payload).replace(/[\u007f-\uffff]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0')).replaceAll('</','<\\/');
+const template=read('operations/mark-signing.template.html');
+assert.ok(template.includes('/* EMBED_BATCH */null'));
+const html=template.replace('/* EMBED_ETHERS */',()=>'').replace('/* EMBED_BATCH */null',()=>embedded);
 const {document}=parseHTML(html);
 const code=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][1][1];
 const context=vm.createContext({document,window:{},ethers,console,Blob,URL,setTimeout});
