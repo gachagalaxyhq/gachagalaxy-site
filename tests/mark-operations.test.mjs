@@ -7,7 +7,9 @@ import { promisify } from 'node:util';
 import { planCutover } from '../scripts/mark-cutover.mjs';
 const source = await readFile(new URL('../functions/api/mark-request.js', import.meta.url), 'utf8');
 const api = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
-const env = { MARK_INTAKE_RPC_TOKEN: 'synthetic', MARK_INTAKE_API_KEY: 'synthetic' };
+// All three scoped bindings are required since the intake gate token was added; without
+// MARK_INTAKE_GATE the handler returns 503 before transport and the bounds below go untested.
+const env = { MARK_INTAKE_RPC_TOKEN: 'synthetic', MARK_INTAKE_API_KEY: 'synthetic', MARK_INTAKE_GATE: 'synthetic' };
 const body = JSON.stringify({ grader: 'PSA', cert: '123456', email: 'synthetic@example.invalid' });
 const post = (handler, data = body) => handler.onRequestPost({ env, request: new Request('https://example.invalid', {
   method: 'POST', body: data, duplex: 'half'

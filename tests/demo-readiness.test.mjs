@@ -115,8 +115,9 @@ test('real saved cert evidence renders as indexed, not live or physical verifica
   assert.match(h, /Matching saved listing found/);
   assert.match(h, /Current availability and physical ownership have not been checked/);
   assert.match(h, /Collector Crypt saved shard: checked/);
-  assert.match(h, /QR-to-cert match: not_checked/);
-  assert.match(h, /PSA \/ grader record: not_checked/);
+  // Live evidence-coverage labels (cleancheck.html): still explicitly not_checked.
+  assert.match(h, /QR-to-cert comparison: not_checked — no QR was compared/);
+  assert.match(h, /Grader lookup: not_checked — no live lookup ran/);
   assert.match(h, /Physical authenticity: not_checked/);
   assert.match(h, new RegExp('/check\\?cert=' + cert + '&amp;grader=PSA#request'));
   assert.doesNotMatch(h, /verdict clear|Single claim, single owner|One live listing/);
@@ -252,10 +253,15 @@ test('saved graders normalize consistently for filtering and handoff', async () 
 });
 
 test('CGC intake cannot reuse a PSA request with identical cert digits', async () => {
+  // V2 storage is grader-scoped (unique grader+cert; covered against real SQL in mark-intake-v2),
+  // so CGC no longer has its own source-level refusal. Without scoped bindings it must still fail
+  // closed before any storage access, never fall back to the service key or PSA records.
   await withFetch(() => { throw new Error('must not access PSA storage'); }, async () => {
     const r = await post({ cert: '109863355', grader: 'CGC', email: 'test@example.invalid' });
     assert.equal(r.status, 503);
-    assert.match((await r.json()).error, /Grader-scoped storage has not been confirmed/);
+    const d = await r.json();
+    assert.equal(d.intakeStatus, 'unavailable'); assert.equal(d.payUrl, null);
+    assert.match(d.error, /Request intake unavailable.*No request saved/);
   });
   const p = await page('check.html', '?cert=109863355&grader=CGC', async (url, opts) => {
     assert.equal(opts, undefined, 'CGC intake must not be posted');
@@ -263,7 +269,9 @@ test('CGC intake cannot reuse a PSA request with identical cert digits', async (
   });
   p.element('remail').value = 'test@example.invalid';
   p.element('rq').events.submit({ preventDefault() {} });
-  assert.match(p.element('rn').textContent, /CGC request intake is not available/);
+  // Live check.html copy: an unconfirmed status keeps every grader closed (no POST asserted above).
+  assert.match(p.element('rn').textContent, /Requests are currently unavailable\. No request sent, payment collected or Mark issued/);
+  assert.equal(p.element('rgo').disabled, true);
 });
 
 test('same digits under different graders stay separate and explicitly labelled', async () => {

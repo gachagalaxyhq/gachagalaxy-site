@@ -44,9 +44,19 @@ test('real migration starts closed; neither environment nor RPC defaults open ac
   try {
     assert.equal((await post(f.handler)).status, 503);
     assert.equal((await f.db.query('select count(*)::int n from mark_intake_private.requests')).rows[0].n, 0);
-    const d = await (await post(api)).json();
-    assert.equal(d.intakeStatus, 'unavailable');
-    assert.equal(d.payUrl, null);
+    // The exported handler's source gate is open (owner-approved 2026-11-07), so it would
+    // reach the production RPC. Stub transport: no production call, and an unreachable
+    // backend must fail closed (no accepted request, no payment link).
+    const oldFetch = globalThis.fetch, urls = [];
+    globalThis.fetch = async url => { urls.push(String(url)); throw new Error('network forbidden in tests'); };
+    try {
+      const r = await post(api);
+      const d = await r.json();
+      assert.ok(r.status >= 500, 'unreachable backend must not accept');
+      assert.equal(d.ok, false); assert.notEqual(d.intakeStatus, 'accepted');
+      assert.equal(d.payUrl, null); assert.equal(d.paymentStatus, 'inactive');
+      assert.ok(urls.every(u => u.endsWith('/rest/v1/rpc/claim_mark_v2')), 'only the stubbed intake RPC');
+    } finally { globalThis.fetch = oldFetch; }
   } finally { await f.db.close(); }
 });
 
@@ -177,11 +187,16 @@ test('production gates never touch credentials or transport, including status an
   const oldFetch = globalThis.fetch;
   globalThis.fetch = () => { throw new Error('network forbidden'); };
   try {
+    // Source intake gate is open (INTAKE_AVAILABLE = true, owner-approved 2026-11-07), so the
+    // handler now reads its scoped bindings for both PSA and CGC (grader-scoped v2 storage); an
+    // unreadable environment must still fail closed with no transport, no accepted request and
+    // no payment link (502 "uncertain", previously 503 "unavailable" while the gate was closed).
     for (const grader of ['PSA', 'CGC']) {
       const r = await post(api, input('123456', grader), forbiddenEnv);
-      assert.equal(r.status, 503);
+      assert.equal(r.status, 502);
       const d = await r.json();
-      assert.equal(d.ok, false); assert.equal(d.payUrl, null); assert.equal(d.paymentStatus, 'inactive');
+      assert.equal(d.ok, false); assert.notEqual(d.intakeStatus, 'accepted');
+      assert.equal(d.payUrl, null); assert.equal(d.paymentStatus, 'inactive');
       assert.equal(r.headers.get('cache-control'), 'no-store');
     }
     assert.equal((await api.onRequestGet({ env: forbiddenEnv })).status, 503);
